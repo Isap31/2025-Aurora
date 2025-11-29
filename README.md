@@ -1,4 +1,6 @@
-AuroraFlow 🌟
+AuroraFlow 
+
+<img width="129" height="126" alt="Screenshot 2025-11-29 at 2 44 17 PM" src="https://github.com/user-attachments/assets/278025f5-a1c6-4ba5-84a3-fbe683afc7e7" />
 
 AI-Powered Diabetes Management for Everyone
 
