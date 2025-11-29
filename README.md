@@ -17,21 +17,22 @@ AI-Powered Diabetes Management for Everyone
 Voice-first, accessible diabetes tracking and insights for the 27 million Americans who can't afford expensive glucose monitoring technology.
 
 **About**
+
 AuroraFlow is a voice-first, AI-powered diabetes management application designed to make glucose tracking and personalized health insights accessible to everyone—not just those who can afford expensive continuous glucose monitors (CGMs).
 Built with health equity at its core, AuroraFlow serves the 27 million Americans with Type 2 diabetes who cannot access $2,500-6,000/year CGM technology.
 Personal Mission: This app was created for my mother, a Type 1 diabetic, and millions like her who deserve better tools to manage their health. Every line of code honors her daily struggle and strength.
 
 **The Problem**
-The Diabetes Crisis
 
+The Diabetes Crisis: 
 38.4 million Americans have diabetes (11.6% of population)
 $412.9 billion annual cost to the US economy
 1,057 Americans die daily from diabetes complications
 Diabetes is the leading cause of blindness, kidney failure, and lower-limb amputations
 
 **The Technology Gap**
-CGMs (Continuous Glucose Monitors) are the gold standard:
 
+CGMs (Continuous Glucose Monitors) are the gold standard:
 Real-time glucose monitoring 24/7
 Predictive alerts for dangerous highs and lows
 Average 1.0 point A1C reduction
@@ -47,26 +48,22 @@ Non-English speakers without localized apps
 Rural communities without access to diabetes specialists
 
 **The Solution**
-AuroraFlow provides AI-powered insights for $30 glucose meters—not $3,000 CGMs.
-Core Differentiators
-Voice-First Design
 
+AuroraFlow provides AI-powered insights for $30 glucose meters—not $3,000 CGMs.
+*Core Differentiators*-
+Voice-First Design
 "Hey AuroraFlow, log 142" - hands-free logging
+
 Full voice navigation for accessibility
+
 Emergency guidance: "I think I'm low" → step-by-step protocol
 
 **AI Personalization**
 
-Learns YOUR specific glucose patterns
+Learns YOUR specific glucose patterns:
 "Oatmeal works better than cereal for YOUR body"
 Budget-conscious meal recommendations
 Culturally competent guidance
-
-**Affordable Technology**
-
-Works with $20-60 glucose meters from Walmart/CVS
-No expensive hardware required
-Bluetooth sync optional, not required
 
 **Free Core Features**
 
@@ -76,7 +73,7 @@ Premium features for advanced users ($4.99/mo)
 
 **Accessibility-First**
 
-Large text modes (150%, 200%)
+Large text modes=
 High contrast mode
 Full screen reader support
 Voice navigation throughout
@@ -94,14 +91,15 @@ Current Features (v0.1 - MVP)
 
 **User Authentication**
 
-Secure signup/login with JWT tokens
-Password hashing with bcrypt
+Secure signup/login with HuggingFace tokens
+Password hashing
 Email validation
+User Privacy
 
 **Glucose Logging (in development)**
 
 Manual entry with large, easy-to-tap buttons
-Voice input: "Log 142"
+Voice input: "Log 120"
 Photo OCR: Take picture of meter
 Timestamp and optional notes
 
@@ -161,7 +159,8 @@ Remote monitoring
 Configurable alerts
 
 **Tech Stack**
-Frontend (Mobile App)
+
+**Frontend (Mobile App)**
 
 React Native - Cross-platform mobile development
 Expo - Development toolchain and build system
@@ -193,7 +192,7 @@ Claude Code - AI-assisted development
 Expo Go - Mobile testing
 
 **Roadmap**
-Phase 1: MVP (Nov 2024 - Jan 2025)
+Phase 1: MVP
 
  Project setup
  Authentication system
@@ -202,7 +201,7 @@ Phase 1: MVP (Nov 2024 - Jan 2025)
  Basic data visualization
  Beta testing with 20 users
 
-Phase 2: Voice & AI Foundation (Feb - Apr 2025)
+Phase 2: Voice & AI Foundation
 
  Voice input integration
  FlowSense voice assistant
@@ -211,7 +210,7 @@ Phase 2: Voice & AI Foundation (Feb - Apr 2025)
  Weekly summary reports
  500+ active users
 
-Phase 3: AI Predictions (May - Sep 2025)
+Phase 3: AI Predictions
 
  LSTM model development
  Glucose prediction (2-4 hours ahead)
@@ -220,16 +219,16 @@ Phase 3: AI Predictions (May - Sep 2025)
  Photo-based food logging
  2,000+ active users
 
-Phase 4: Bluetooth & Scale (Oct 2025 - Mar 2026)
+Phase 4: Bluetooth & Scale 
 
- Bluetooth meter integration (OneTouch)
+ Bluetooth meter integration
  Multiple meter support
  CGM integration (for users who have it)
  FQHC partnerships (3-5 centers)
  Insurance partnership pilot
  5,000+ active users
 
-Phase 5: National Launch (Apr 2026+)
+Phase 5: National Launch 
 
  Multilingual support (Spanish, Chinese)
  Advanced AI features
@@ -240,6 +239,7 @@ Phase 5: National Launch (Apr 2026+)
  Series A fundraising
 
 **Contact**
+
 Caitlin Przywara - Founder
 
 Email: isabellacaitlin03@gmail.com
