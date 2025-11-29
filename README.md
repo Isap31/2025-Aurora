@@ -74,7 +74,7 @@ Essential tracking always free
 No paywall for basic diabetes management
 Premium features for advanced users ($4.99/mo)
 
-**♿ Accessibility-First**
+**Accessibility-First**
 
 Large text modes (150%, 200%)
 High contrast mode
