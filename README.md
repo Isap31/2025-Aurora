@@ -7,6 +7,7 @@
 AuroraFlow exists because she—and 27 million Americans like her—deserve better. They deserve AI-powered insights. They deserve voice-first accessibility. They deserve to manage their diabetes with dignity and confidence.
 This isn't just a student project or a business opportunity. This is personal. This is my mother's life. This is millions of lives.
 And if I can build even a small part of the solution, I will."
+
 — Caitlin Przywara, Founder
 
 **AuroraFlow**
