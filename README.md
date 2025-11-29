@@ -50,9 +50,9 @@ Rural communities without access to diabetes specialists
 **The Solution**
 
 AuroraFlow provides AI-powered insights for $30 glucose meters—not $3,000 CGMs.
+
 *Core Differentiators*-
-Voice-First Design
-"Hey AuroraFlow, log 142" - hands-free logging
+Voice-First Design: "Hey AuroraFlow, log 142" - hands-free logging
 
 Full voice navigation for accessibility
 
