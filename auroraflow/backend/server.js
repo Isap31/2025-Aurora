@@ -20,10 +20,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes will be added here
-// app.use('/api/auth', require('./routes/auth'));
-// app.use('/api/glucose', require('./routes/glucose'));
-// app.use('/api/predictions', require('./routes/predictions'));
+// API Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/glucose', require('./routes/glucose'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
