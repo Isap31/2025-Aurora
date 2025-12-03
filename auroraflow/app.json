@@ -14,7 +14,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.auroraflow"
+      "bundleIdentifier": "com.anonymous.auroraflow",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "AuroraFlow needs access to your microphone to log glucose readings via voice input.",
+        "NSSpeechRecognitionUsageDescription": "AuroraFlow uses speech recognition to help you quickly log your glucose readings by speaking."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +26,10 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.auroraflow"
+      "package": "com.anonymous.auroraflow",
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

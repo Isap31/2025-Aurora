@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,12 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import glucoseService from '../../services/glucoseService';
+import voiceService from '../../services/voiceService';
 
 export default function LogGlucoseScreen({ navigation }) {
   const [value, setValue] = useState('');
@@ -21,6 +24,40 @@ export default function LogGlucoseScreen({ navigation }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Voice input state
+  const [isListening, setIsListening] = useState(false);
+  const [voiceFeedback, setVoiceFeedback] = useState('');
+  const pulseAnim = useState(new Animated.Value(1))[0];
+
+  // Pulse animation effect when listening
+  useEffect(() => {
+    if (isListening) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [isListening]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      voiceService.destroy();
+    };
+  }, []);
 
   // Get color feedback based on glucose value
   const getValueColor = () => {
@@ -42,6 +79,56 @@ export default function LogGlucoseScreen({ navigation }) {
     setShowTimePicker(Platform.OS === 'ios');
     if (selectedTime) {
       setTime(selectedTime);
+    }
+  };
+
+  // Voice input handlers
+  const handleVoicePress = async () => {
+    if (isListening) {
+      // Stop listening
+      await voiceService.stopListening();
+      setIsListening(false);
+      setVoiceFeedback('');
+    } else {
+      // Start listening
+      setIsListening(true);
+      setVoiceFeedback('Listening...');
+
+      const success = await voiceService.startListening(
+        (glucoseValue, spokenText) => {
+          // Voice result callback
+          setIsListening(false);
+
+          if (glucoseValue) {
+            setValue(glucoseValue.toString());
+            setVoiceFeedback(`Got it! ${glucoseValue} mg/dL`);
+
+            // Clear feedback after 3 seconds
+            setTimeout(() => setVoiceFeedback(''), 3000);
+          } else {
+            setVoiceFeedback("Didn't catch a glucose value. Try saying 'Log' followed by a number.");
+            setTimeout(() => setVoiceFeedback(''), 4000);
+          }
+        },
+        (error) => {
+          // Voice error callback
+          setIsListening(false);
+          const errorMessage = voiceService.getErrorMessage(error);
+          setVoiceFeedback(errorMessage);
+
+          // Show alert for permission issues
+          if (error === 'permission_denied') {
+            Alert.alert('Permission Required', errorMessage);
+          }
+
+          setTimeout(() => setVoiceFeedback(''), 4000);
+        }
+      );
+
+      if (!success) {
+        setIsListening(false);
+        setVoiceFeedback('');
+      }
     }
   };
 
@@ -116,6 +203,41 @@ export default function LogGlucoseScreen({ navigation }) {
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Log Glucose Reading</Text>
+
+        {/* Voice Input Section */}
+        <View style={styles.voiceSection}>
+          <TouchableOpacity
+            style={[
+              styles.micButton,
+              isListening && styles.micButtonActive,
+            ]}
+            onPress={handleVoicePress}
+            activeOpacity={0.7}
+          >
+            <Animated.View
+              style={[
+                styles.micIconContainer,
+                {
+                  transform: [{ scale: pulseAnim }],
+                },
+              ]}
+            >
+              <Ionicons
+                name={isListening ? 'mic' : 'mic-outline'}
+                size={40}
+                color={isListening ? '#FFFFFF' : '#7B2CBF'}
+              />
+            </Animated.View>
+          </TouchableOpacity>
+          <Text style={styles.voicePrompt}>
+            {isListening ? 'Listening...' : 'Tap to speak'}
+          </Text>
+          {voiceFeedback ? (
+            <View style={styles.feedbackContainer}>
+              <Text style={styles.feedbackText}>{voiceFeedback}</Text>
+            </View>
+          ) : null}
+        </View>
 
         {/* Glucose Value Input */}
         <View
@@ -360,5 +482,59 @@ const styles = StyleSheet.create({
   rangeText: {
     fontSize: 14,
     color: '#4B5563',
+  },
+  // Voice input styles
+  voiceSection: {
+    alignItems: 'center',
+    marginBottom: 32,
+    paddingVertical: 20,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16,
+  },
+  micButton: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#7B2CBF',
+    shadowColor: '#7B2CBF',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  micButtonActive: {
+    backgroundColor: '#7B2CBF',
+    borderColor: '#5B1F9F',
+  },
+  micIconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  voicePrompt: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4B5563',
+    marginTop: 12,
+  },
+  feedbackContainer: {
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    marginTop: 12,
+    maxWidth: '90%',
+  },
+  feedbackText: {
+    fontSize: 14,
+    color: '#1E40AF',
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });
