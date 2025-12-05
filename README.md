@@ -73,10 +73,14 @@ Premium features for advanced users ($4.99/mo)
 
 **Accessibility-First**
 
-Large text modes=
+Large text modes
+
 High contrast mode
+
 Full screen reader support
+
 Voice navigation throughout
+
 Designed for visually impaired, elderly, and users with limited health literacy
 
 **Culturally Competent**
