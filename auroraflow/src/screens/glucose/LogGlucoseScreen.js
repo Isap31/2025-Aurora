@@ -10,11 +10,12 @@ import {
   Alert,
   ActivityIndicator,
   Animated,
+  SafeAreaView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import glucoseService from '../../services/glucoseService';
-import voiceService from '../../services/voiceService';
 
 export default function LogGlucoseScreen({ navigation }) {
   const [value, setValue] = useState('');
@@ -24,48 +25,67 @@ export default function LogGlucoseScreen({ navigation }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  // Voice input state
-  const [isListening, setIsListening] = useState(false);
-  const [voiceFeedback, setVoiceFeedback] = useState('');
-  const pulseAnim = useState(new Animated.Value(1))[0];
+  const scaleAnim = useState(new Animated.Value(1))[0];
+  const successAnim = useState(new Animated.Value(0))[0];
+  const fadeAnim = useState(new Animated.Value(0))[0];
 
-  // Pulse animation effect when listening
   useEffect(() => {
-    if (isListening) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.2,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    } else {
-      pulseAnim.setValue(1);
-    }
-  }, [isListening]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      voiceService.destroy();
-    };
+    // Fade in animation
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
   // Get color feedback based on glucose value
   const getValueColor = () => {
     const numValue = parseFloat(value);
-    if (!value || isNaN(numValue)) return '#E5E7EB';
+    if (!value || isNaN(numValue)) {
+      return {
+        backgroundColor: '#F3F4F6',
+        textColor: '#9CA3AF',
+        borderColor: '#E5E7EB',
+      };
+    }
 
     const { backgroundColor, textColor } = glucoseService.getGlucoseCategory(numValue);
-    return { backgroundColor, textColor };
+    return { backgroundColor, textColor, borderColor: textColor };
+  };
+
+  const getEncouragingMessage = () => {
+    const numValue = parseFloat(value);
+    if (!value || isNaN(numValue)) return '';
+
+    const { category } = glucoseService.getGlucoseCategory(numValue);
+
+    if (category === 'Normal') {
+      return "Great! You're in your target range! 🎉";
+    } else if (category === 'Low' || category === 'Very Low') {
+      return "Low reading - consider a snack 🍎";
+    } else if (category === 'High' || category === 'Very High') {
+      return "High reading - stay hydrated 💧";
+    }
+    return '';
+  };
+
+  const handleValueChange = (text) => {
+    setValue(text);
+    // Pulse animation when typing
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.05,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   const handleDateChange = (event, selectedDate) => {
@@ -82,67 +102,36 @@ export default function LogGlucoseScreen({ navigation }) {
     }
   };
 
-  // Voice input handlers
-  const handleVoicePress = async () => {
-    if (isListening) {
-      // Stop listening
-      await voiceService.stopListening();
-      setIsListening(false);
-      setVoiceFeedback('');
-    } else {
-      // Start listening
-      setIsListening(true);
-      setVoiceFeedback('Listening...');
-
-      const success = await voiceService.startListening(
-        (glucoseValue, spokenText) => {
-          // Voice result callback
-          setIsListening(false);
-
-          if (glucoseValue) {
-            setValue(glucoseValue.toString());
-            setVoiceFeedback(`Got it! ${glucoseValue} mg/dL`);
-
-            // Clear feedback after 3 seconds
-            setTimeout(() => setVoiceFeedback(''), 3000);
-          } else {
-            setVoiceFeedback("Didn't catch a glucose value. Try saying 'Log' followed by a number.");
-            setTimeout(() => setVoiceFeedback(''), 4000);
-          }
-        },
-        (error) => {
-          // Voice error callback
-          setIsListening(false);
-          const errorMessage = voiceService.getErrorMessage(error);
-          setVoiceFeedback(errorMessage);
-
-          // Show alert for permission issues
-          if (error === 'permission_denied') {
-            Alert.alert('Permission Required', errorMessage);
-          }
-
-          setTimeout(() => setVoiceFeedback(''), 4000);
-        }
-      );
-
-      if (!success) {
-        setIsListening(false);
-        setVoiceFeedback('');
-      }
-    }
+  const showSuccessAnimation = () => {
+    setShowSuccess(true);
+    Animated.sequence([
+      Animated.timing(successAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1500),
+      Animated.timing(successAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShowSuccess(false);
+    });
   };
 
   const validateAndSave = async () => {
     // Validate glucose value
     const numValue = parseFloat(value);
     if (!value || isNaN(numValue)) {
-      Alert.alert('Invalid Input', 'Please enter a valid glucose value');
+      Alert.alert('Oops!', 'Please enter a valid glucose value 😊');
       return;
     }
 
     if (numValue < 20 || numValue > 600) {
       Alert.alert(
-        'Invalid Range',
+        'Out of Range',
         'Glucose value must be between 20 and 600 mg/dL'
       );
       return;
@@ -168,24 +157,17 @@ export default function LogGlucoseScreen({ navigation }) {
         notes
       );
 
-      Alert.alert(
-        'Success',
-        'Glucose reading saved successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Clear form
-              setValue('');
-              setNotes('');
-              setDate(new Date());
-              setTime(new Date());
-              // Navigate to history
-              navigation.navigate('History');
-            },
-          },
-        ]
-      );
+      // Show success animation
+      showSuccessAnimation();
+
+      // Clear form after a delay
+      setTimeout(() => {
+        setValue('');
+        setNotes('');
+        setDate(new Date());
+        setTime(new Date());
+        navigation.navigate('Dashboard');
+      }, 2000);
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to save reading');
     } finally {
@@ -200,341 +182,520 @@ export default function LogGlucoseScreen({ navigation }) {
     : '';
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Log Glucose Reading</Text>
-
-        {/* Voice Input Section */}
-        <View style={styles.voiceSection}>
-          <TouchableOpacity
-            style={[
-              styles.micButton,
-              isListening && styles.micButtonActive,
-            ]}
-            onPress={handleVoicePress}
-            activeOpacity={0.7}
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <Animated.View style={{ opacity: fadeAnim }}>
+          {/* Header with Gradient */}
+          <LinearGradient
+            colors={['#8B5CF6', '#7C3AED']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.header}
           >
+            <View style={styles.headerContent}>
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={styles.backButton}
+              >
+                <Ionicons name="arrow-back" size={28} color="#FFF" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Log Reading</Text>
+              <View style={styles.placeholder} />
+            </View>
+          </LinearGradient>
+
+          <View style={styles.content}>
+            {/* Glucose Value Input */}
             <Animated.View
               style={[
-                styles.micIconContainer,
+                styles.valueCard,
                 {
-                  transform: [{ scale: pulseAnim }],
+                  backgroundColor: colors.backgroundColor,
+                  borderColor: colors.borderColor,
+                  transform: [{ scale: scaleAnim }],
                 },
               ]}
             >
-              <Ionicons
-                name={isListening ? 'mic' : 'mic-outline'}
-                size={40}
-                color={isListening ? '#FFFFFF' : '#7B2CBF'}
-              />
+              <View style={styles.valueHeader}>
+                <Ionicons name="water" size={32} color={colors.textColor} />
+                <Text style={[styles.valueLabel, { color: colors.textColor }]}>
+                  Glucose Level
+                </Text>
+              </View>
+              <View style={styles.valueInputContainer}>
+                <TextInput
+                  style={[
+                    styles.valueInput,
+                    { color: colors.textColor },
+                  ]}
+                  value={value}
+                  onChangeText={handleValueChange}
+                  placeholder="000"
+                  placeholderTextColor="#D1D5DB"
+                  keyboardType="numeric"
+                  maxLength={3}
+                  autoFocus
+                />
+                <Text style={[styles.unitText, { color: colors.textColor }]}>
+                  mg/dL
+                </Text>
+              </View>
+              {category ? (
+                <View style={styles.categoryContainer}>
+                  <Text
+                    style={[
+                      styles.categoryBadge,
+                      { color: colors.textColor },
+                    ]}
+                  >
+                    {category}
+                  </Text>
+                  {getEncouragingMessage() ? (
+                    <Text style={styles.encouragingText}>
+                      {getEncouragingMessage()}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : (
+                <Text style={styles.promptText}>
+                  Enter your glucose reading
+                </Text>
+              )}
             </Animated.View>
-          </TouchableOpacity>
-          <Text style={styles.voicePrompt}>
-            {isListening ? 'Listening...' : 'Tap to speak'}
-          </Text>
-          {voiceFeedback ? (
-            <View style={styles.feedbackContainer}>
-              <Text style={styles.feedbackText}>{voiceFeedback}</Text>
+
+            {/* Date and Time */}
+            <View style={styles.dateTimeRow}>
+              <View style={styles.dateTimeItem}>
+                <View style={styles.dateTimeHeader}>
+                  <Ionicons name="calendar" size={20} color="#8B5CF6" />
+                  <Text style={styles.dateTimeLabel}>Date</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.dateTimeButton}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text style={styles.dateTimeText}>
+                    {date.toLocaleDateString([], {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </Text>
+                </TouchableOpacity>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={handleDateChange}
+                    maximumDate={new Date()}
+                  />
+                )}
+              </View>
+
+              <View style={styles.dateTimeItem}>
+                <View style={styles.dateTimeHeader}>
+                  <Ionicons name="time" size={20} color="#3B82F6" />
+                  <Text style={styles.dateTimeLabel}>Time</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.dateTimeButton}
+                  onPress={() => setShowTimePicker(true)}
+                >
+                  <Text style={styles.dateTimeText}>
+                    {time.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                </TouchableOpacity>
+                {showTimePicker && (
+                  <DateTimePicker
+                    value={time}
+                    mode="time"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={handleTimeChange}
+                  />
+                )}
+              </View>
             </View>
-          ) : null}
-        </View>
 
-        {/* Glucose Value Input */}
-        <View
-          style={[
-            styles.valueContainer,
-            { backgroundColor: colors.backgroundColor || '#F3F4F6' },
-          ]}
-        >
-          <Text style={styles.label}>Glucose Level (mg/dL)</Text>
-          <TextInput
-            style={[
-              styles.valueInput,
-              { color: colors.textColor || '#1F2937' },
-            ]}
-            value={value}
-            onChangeText={setValue}
-            placeholder="Enter value"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="numeric"
-            maxLength={3}
-          />
-          {category ? (
-            <Text
-              style={[
-                styles.categoryText,
-                { color: colors.textColor },
-              ]}
+            {/* Notes Input */}
+            <View style={styles.notesCard}>
+              <View style={styles.notesHeader}>
+                <Ionicons name="document-text" size={20} color="#6B7280" />
+                <Text style={styles.notesLabel}>Notes (Optional)</Text>
+              </View>
+              <TextInput
+                style={styles.notesInput}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="How are you feeling? Any notes..."
+                placeholderTextColor="#9CA3AF"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+
+            {/* Save Button with Gradient */}
+            <TouchableOpacity
+              style={styles.saveButtonContainer}
+              onPress={validateAndSave}
+              disabled={loading || !value}
+              activeOpacity={0.8}
             >
-              {category}
-            </Text>
-          ) : null}
-        </View>
+              <LinearGradient
+                colors={
+                  loading || !value
+                    ? ['#D1D5DB', '#9CA3AF']
+                    : ['#8B5CF6', '#7C3AED']
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.saveButton}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle" size={24} color="#FFF" />
+                    <Text style={styles.saveButtonText}>
+                      Save Reading
+                    </Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
 
-        {/* Date Picker */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Date</Text>
-          <TouchableOpacity
-            style={styles.dateButton}
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Text style={styles.dateButtonText}>
-              {date.toLocaleDateString()}
-            </Text>
-          </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={handleDateChange}
-              maximumDate={new Date()}
-            />
-          )}
-        </View>
+            {/* Range Guide */}
+            <View style={styles.rangeGuide}>
+              <Text style={styles.rangeTitle}>📊 Target Ranges</Text>
+              <View style={styles.rangeList}>
+                <View style={styles.rangeItem}>
+                  <View style={[styles.rangeDot, { backgroundColor: '#DC2626' }]} />
+                  <Text style={styles.rangeText}>Very Low: &lt;55</Text>
+                </View>
+                <View style={styles.rangeItem}>
+                  <View style={[styles.rangeDot, { backgroundColor: '#F59E0B' }]} />
+                  <Text style={styles.rangeText}>Low: 55-69</Text>
+                </View>
+                <View style={styles.rangeItem}>
+                  <View style={[styles.rangeDot, { backgroundColor: '#10B981' }]} />
+                  <Text style={styles.rangeText}>Normal: 70-180</Text>
+                </View>
+                <View style={styles.rangeItem}>
+                  <View style={[styles.rangeDot, { backgroundColor: '#F59E0B' }]} />
+                  <Text style={styles.rangeText}>High: 181-250</Text>
+                </View>
+                <View style={styles.rangeItem}>
+                  <View style={[styles.rangeDot, { backgroundColor: '#DC2626' }]} />
+                  <Text style={styles.rangeText}>Very High: &gt;250</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </Animated.View>
+      </ScrollView>
 
-        {/* Time Picker */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Time</Text>
-          <TouchableOpacity
-            style={styles.dateButton}
-            onPress={() => setShowTimePicker(true)}
-          >
-            <Text style={styles.dateButtonText}>
-              {time.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </Text>
-          </TouchableOpacity>
-          {showTimePicker && (
-            <DateTimePicker
-              value={time}
-              mode="time"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={handleTimeChange}
-            />
-          )}
-        </View>
-
-        {/* Notes Input */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Notes (Optional)</Text>
-          <TextInput
-            style={styles.notesInput}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Add notes about this reading..."
-            placeholderTextColor="#9CA3AF"
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-        </View>
-
-        {/* Save Button */}
-        <TouchableOpacity
+      {/* Success Overlay */}
+      {showSuccess && (
+        <Animated.View
           style={[
-            styles.saveButton,
-            loading && styles.saveButtonDisabled,
+            styles.successOverlay,
+            {
+              opacity: successAnim,
+              transform: [
+                {
+                  scale: successAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.5, 1],
+                  }),
+                },
+              ],
+            },
           ]}
-          onPress={validateAndSave}
-          disabled={loading}
         >
-          {loading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.saveButtonText}>Save Reading</Text>
-          )}
-        </TouchableOpacity>
-
-        {/* Range Guide */}
-        <View style={styles.rangeGuide}>
-          <Text style={styles.rangeTitle}>Target Ranges:</Text>
-          <View style={styles.rangeItem}>
-            <View style={[styles.rangeDot, { backgroundColor: '#DC2626' }]} />
-            <Text style={styles.rangeText}>Very Low: &lt;55 mg/dL</Text>
+          <View style={styles.successContent}>
+            <Ionicons name="checkmark-circle" size={80} color="#10B981" />
+            <Text style={styles.successTitle}>Logged Successfully! 🎉</Text>
+            <Text style={styles.successMessage}>
+              {value} mg/dL - {category}
+            </Text>
           </View>
-          <View style={styles.rangeItem}>
-            <View style={[styles.rangeDot, { backgroundColor: '#F59E0B' }]} />
-            <Text style={styles.rangeText}>Low: 55-69 mg/dL</Text>
-          </View>
-          <View style={styles.rangeItem}>
-            <View style={[styles.rangeDot, { backgroundColor: '#10B981' }]} />
-            <Text style={styles.rangeText}>Normal: 70-180 mg/dL</Text>
-          </View>
-          <View style={styles.rangeItem}>
-            <View style={[styles.rangeDot, { backgroundColor: '#F59E0B' }]} />
-            <Text style={styles.rangeText}>High: 181-250 mg/dL</Text>
-          </View>
-          <View style={styles.rangeItem}>
-            <View style={[styles.rangeDot, { backgroundColor: '#DC2626' }]} />
-            <Text style={styles.rangeText}>Very High: &gt;250 mg/dL</Text>
-          </View>
-        </View>
-      </View>
-    </ScrollView>
+        </Animated.View>
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9FAFB',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  header: {
+    paddingTop: 10,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  placeholder: {
+    width: 44,
   },
   content: {
     padding: 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 30,
+  valueCard: {
+    borderRadius: 24,
+    padding: 32,
+    marginTop: -10,
+    borderWidth: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  valueContainer: {
-    padding: 24,
-    borderRadius: 16,
-    marginBottom: 24,
+  valueHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
   },
-  label: {
-    fontSize: 16,
+  valueLabel: {
+    fontSize: 20,
     fontWeight: '600',
-    color: '#4B5563',
-    marginBottom: 8,
+  },
+  valueInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
   },
   valueInput: {
-    fontSize: 64,
+    fontSize: 80,
     fontWeight: 'bold',
     textAlign: 'center',
     minWidth: 200,
-    padding: 10,
+    padding: 0,
   },
-  categoryText: {
-    fontSize: 18,
+  unitText: {
+    fontSize: 28,
     fontWeight: '600',
-    marginTop: 8,
+    marginLeft: 8,
   },
-  section: {
-    marginBottom: 24,
-  },
-  dateButton: {
-    backgroundColor: '#F3F4F6',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  dateButtonText: {
-    fontSize: 16,
-    color: '#1F2937',
-    fontWeight: '500',
-  },
-  notesInput: {
-    backgroundColor: '#F3F4F6',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    fontSize: 16,
-    color: '#1F2937',
-    minHeight: 100,
-  },
-  saveButton: {
-    backgroundColor: '#7B2CBF',
-    padding: 18,
-    borderRadius: 12,
+  categoryContainer: {
+    marginTop: 16,
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 32,
   },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  rangeGuide: {
-    backgroundColor: '#F9FAFB',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  rangeTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 12,
-  },
-  rangeItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  categoryBadge: {
+    fontSize: 24,
+    fontWeight: 'bold',
     marginBottom: 8,
   },
-  rangeDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 10,
+  encouragingText: {
+    fontSize: 16,
+    color: '#6B7280',
+    fontWeight: '500',
   },
-  rangeText: {
-    fontSize: 14,
-    color: '#4B5563',
+  promptText: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    marginTop: 16,
   },
-  // Voice input styles
-  voiceSection: {
-    alignItems: 'center',
-    marginBottom: 32,
-    paddingVertical: 20,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 16,
+  dateTimeRow: {
+    flexDirection: 'row',
+    marginTop: 24,
+    gap: 12,
   },
-  micButton: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+  dateTimeItem: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  dateTimeHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#7B2CBF',
-    shadowColor: '#7B2CBF',
+    gap: 8,
+    marginBottom: 12,
+  },
+  dateTimeLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  dateTimeButton: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+  },
+  dateTimeText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  notesCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  notesHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  notesLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  notesInput: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    color: '#1F2937',
+    minHeight: 80,
+  },
+  saveButtonContainer: {
+    marginTop: 24,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#8B5CF6',
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
     elevation: 8,
   },
-  micButtonActive: {
-    backgroundColor: '#7B2CBF',
-    borderColor: '#5B1F9F',
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    gap: 12,
   },
-  micIconContainer: {
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  rangeGuide: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 24,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  rangeTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 16,
+  },
+  rangeList: {
+    gap: 12,
+  },
+  rangeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  rangeDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+  },
+  rangeText: {
+    fontSize: 15,
+    color: '#4B5563',
+    fontWeight: '500',
+  },
+  successOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  voicePrompt: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4B5563',
-    marginTop: 12,
+  successContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 40,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 15,
   },
-  feedbackContainer: {
-    backgroundColor: '#DBEAFE',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 20,
-    marginTop: 12,
-    maxWidth: '90%',
-  },
-  feedbackText: {
-    fontSize: 14,
-    color: '#1E40AF',
+  successTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginTop: 16,
     textAlign: 'center',
-    fontWeight: '500',
+  },
+  successMessage: {
+    fontSize: 20,
+    color: '#6B7280',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });

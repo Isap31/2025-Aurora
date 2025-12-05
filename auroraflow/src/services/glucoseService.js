@@ -1,8 +1,9 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_GLUCOSE_URL } from '../../config/api';
 
 // Base API URL
-const API_URL = 'http://localhost:3000/api/glucose';
+const API_URL = API_GLUCOSE_URL;
 
 // Create axios instance for glucose API
 const glucoseAPI = axios.create({

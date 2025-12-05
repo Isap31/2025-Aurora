@@ -21,26 +21,6 @@ import authService from './src/services/authService';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Auth Stack Navigator
-function AuthStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Signup" component={SignupScreen} />
-    </Stack.Navigator>
-  );
-}
-
-// Main App Stack (after authentication)
-function MainStack() {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Dashboard" component={DashboardScreen} />
-      <Stack.Screen name="MainTabs" component={MainTabs} />
-    </Stack.Navigator>
-  );
-}
-
 // Bottom Tab Navigator for main app
 function MainTabs() {
   return (
@@ -75,6 +55,11 @@ export default function App() {
 
   useEffect(() => {
     checkAuthentication();
+
+    // Check auth status periodically to catch changes
+    const interval = setInterval(checkAuthentication, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const checkAuthentication = async () => {

@@ -35,8 +35,8 @@ export default function LoginScreen({ navigation }) {
       // Call auth service
       const result = await authService.signIn(email.trim(), password);
 
-      // Navigate to Dashboard on success
-      navigation.replace('Dashboard');
+      // Auth state will update automatically, no need to navigate manually
+      // The App component checks auth status periodically
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please try again.');
@@ -47,6 +47,20 @@ export default function LoginScreen({ navigation }) {
 
   const navigateToSignup = () => {
     navigation.navigate('Signup');
+  };
+
+  const handleGuestMode = async () => {
+    try {
+      setLoading(true);
+      await authService.setGuestMode();
+      // Auth state will update automatically, no need to navigate manually
+      // The App component checks auth status periodically
+    } catch (err) {
+      console.error('Guest mode error:', err);
+      setError(err.message || 'Failed to enter guest mode');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -111,6 +125,20 @@ export default function LoginScreen({ navigation }) {
                 <Text style={styles.signupLink}>Sign Up</Text>
               </TouchableOpacity>
             </View>
+
+            <View style={styles.dividerContainer}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>OR</Text>
+              <View style={styles.divider} />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.guestButton, loading && styles.buttonDisabled]}
+              onPress={handleGuestMode}
+              disabled={loading}
+            >
+              <Text style={styles.guestButtonText}>Continue as Guest</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -197,5 +225,34 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#C62828',
     fontSize: 14,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#DDD',
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  guestButton: {
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    padding: 15,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#7B2CBF',
+  },
+  guestButtonText: {
+    color: '#7B2CBF',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

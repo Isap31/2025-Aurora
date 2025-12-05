@@ -1,8 +1,9 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_AUTH_URL } from '../../config/api';
 
-// Base API URL - update this to your backend URL
-const API_URL = 'http://localhost:3000/api/auth';
+// Base API URL - update this in config/api.js
+const API_URL = API_AUTH_URL;
 
 // Create axios instance with default config
 const api = axios.create({

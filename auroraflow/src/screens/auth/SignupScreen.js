@@ -47,8 +47,8 @@ export default function SignupScreen({ navigation }) {
       // Call auth service
       const result = await authService.signUp(name.trim(), email.trim(), password);
 
-      // Navigate to Dashboard on success
-      navigation.replace('Dashboard');
+      // Auth state will update automatically, no need to navigate manually
+      // The App component checks auth status periodically
     } catch (err) {
       console.error('Signup error:', err);
       setError(err.message || 'Signup failed. Please try again.');
