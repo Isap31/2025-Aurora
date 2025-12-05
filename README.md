@@ -6,7 +6,7 @@
 "My mother tests her blood sugar 8 times a day. She makes 50+ health decisions daily that could save or endanger her life. She does this alone because the technology that could help costs $6,000 per year.
 AuroraFlow exists because she—and 27 million Americans like her—deserve better. They deserve AI-powered insights. They deserve voice-first accessibility. They deserve to manage their diabetes with dignity and confidence.
 This isn't just a student project or a business opportunity. This is personal. This is my mother's life. This is millions of lives.
-And if I can build even a small part of the solution, I will."
+If I can build even a small part of the solution, I will."
 
 — Caitlin Przywara, Founder
 
