@@ -91,7 +91,7 @@ Current Features (v0.1 - MVP)
 
 **User Authentication**
 
-Secure signup/login with HuggingFace tokens
+Secure signup/login with API tokens
 Password hashing
 Email validation
 User Privacy
@@ -123,7 +123,7 @@ Emergency protocols
 **Pattern Recognition**
 
 "You spike after breakfast on weekdays"
-Dawn phenomenon detection
+Dawn detection
 Meal impact analysis
 
 **Meal & Medication Tracking**
