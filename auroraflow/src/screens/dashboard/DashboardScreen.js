@@ -14,6 +14,34 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Modal from 'react-native-modal';
 
+const DAILY_AFFIRMATIONS = [
+  "Great job staying in range today! 🎉",
+  "Your morning readings are very consistent! ⭐",
+  "Keep up the good work with meal logging! 💪",
+  "You're taking great care of yourself today! ❤️",
+  "Small steps lead to big changes! 🌟",
+  "You're doing better than you think! 💫",
+  "Every reading logged is a step toward better health! 📊",
+  "Your dedication is inspiring! ✨",
+  "Managing diabetes is hard, but you're doing amazing! 🌈",
+  "Consistency is key, and you're nailing it! 🔑",
+  "Your future self thanks you for today's effort! 🙏",
+  "Progress, not perfection! 💜",
+  "You're stronger than your highest number! 💪",
+  "Taking control one reading at a time! 🎯",
+  "Your health journey matters! 🌸",
+  "Celebrating your commitment to wellness! 🎊",
+  "Every meal logged helps you understand your body better! 🍽️",
+  "Exercise is medicine, and you're taking your dose! 🏃",
+  "Sleep well tonight - you earned it! 😴",
+  "Your glucose doesn't define you, but your effort does! 💖"
+];
+
+const getRandomAffirmation = () => {
+  const randomIndex = Math.floor(Math.random() * DAILY_AFFIRMATIONS.length);
+  return DAILY_AFFIRMATIONS[randomIndex];
+};
+
 export default function DashboardScreen({ navigation }) {
   const [userName] = useState('Bridget'); // Mock user name
   const [latestGlucose] = useState(142); // Mock glucose reading
@@ -24,6 +52,14 @@ export default function DashboardScreen({ navigation }) {
   const [logMealModalVisible, setLogMealModalVisible] = useState(false);
   const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
   const [insightsModalVisible, setInsightsModalVisible] = useState(false);
+
+  // Daily affirmation state
+  const [dailyAffirmation, setDailyAffirmation] = useState('');
+
+  // Set random affirmation on mount
+  useEffect(() => {
+    setDailyAffirmation(getRandomAffirmation());
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -214,9 +250,15 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.insightContent}>
             <Text style={styles.insightTitle}>Today's Insight</Text>
             <Text style={styles.insightText}>
-              Great job staying in range today!
+              {dailyAffirmation}
             </Text>
           </View>
+          <TouchableOpacity
+            onPress={() => setDailyAffirmation(getRandomAffirmation())}
+            style={styles.refreshButton}
+          >
+            <Text style={styles.refreshIcon}>🔄</Text>
+          </TouchableOpacity>
         </View>
 
         {/* 7. AURORA ASSISTANT TEASER */}
