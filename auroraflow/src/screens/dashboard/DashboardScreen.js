@@ -42,7 +42,8 @@ export default function DashboardScreen({ navigation }) {
       setUser(currentUser);
 
       // Load recent glucose reading
-      const readings = await glucoseService.getAllReadings();
+      const result = await glucoseService.getReadings();
+      const readings = result.readings || [];
       if (readings && readings.length > 0) {
         setRecentGlucose(readings[0]);
 
@@ -182,7 +183,7 @@ export default function DashboardScreen({ navigation }) {
             <View style={styles.dailyInfoCard}>
               <View style={styles.dailyInfoHeader}>
                 <View style={styles.dailyInfoTitleRow}>
-                  <Ionicons name="sparkles" size={24} color="#F59E0B" />
+                  <Ionicons name="star" size={24} color="#F59E0B" />
                   <Text style={styles.dailyInfoTitle}>Daily Information Generation</Text>
                 </View>
                 <TouchableOpacity
@@ -262,7 +263,7 @@ export default function DashboardScreen({ navigation }) {
                 style={styles.auroraGradient}
               >
                 <View style={styles.auroraHeader}>
-                  <Ionicons name="sparkles" size={28} color="#FFF" />
+                  <Ionicons name="star" size={28} color="#FFF" />
                   <Text style={styles.auroraTitle}>Aurora - your daily assistant</Text>
                 </View>
                 <Text style={styles.auroraSubtitle}>

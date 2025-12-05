@@ -1,21 +1,26 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
-  FlatList,
+  ScrollView,
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Swipeable } from 'react-native-gesture-handler';
+import { LinearGradient } from 'expo-linear-gradient';
 import glucoseService from '../../services/glucoseService';
 
 export default function HistoryScreen({ navigation }) {
   const [readings, setReadings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [todayReadings, setTodayReadings] = useState([]);
+  const [yesterdayReadings, setYesterdayReadings] = useState([]);
 
   useEffect(() => {
     loadReadings();
@@ -32,7 +37,27 @@ export default function HistoryScreen({ navigation }) {
   const loadReadings = async () => {
     try {
       const result = await glucoseService.getReadings();
-      setReadings(result.readings || []);
+      const allReadings = result.readings || [];
+      setReadings(allReadings);
+
+      // Group readings by today and yesterday
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const todayItems = allReadings.filter(reading => {
+        const readingDate = new Date(reading.reading_time);
+        return readingDate >= today;
+      });
+
+      const yesterdayItems = allReadings.filter(reading => {
+        const readingDate = new Date(reading.reading_time);
+        return readingDate >= yesterday && readingDate < today;
+      });
+
+      setTodayReadings(todayItems);
+      setYesterdayReadings(yesterdayItems);
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to load readings');
     } finally {
@@ -46,77 +71,105 @@ export default function HistoryScreen({ navigation }) {
     loadReadings();
   }, []);
 
-  const handleDelete = (id, value, date) => {
-    Alert.alert(
-      'Delete Reading',
-      `Delete reading of ${value} mg/dL from ${new Date(date).toLocaleDateString()}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await glucoseService.deleteReading(id);
-              // Remove from local state
-              setReadings(readings.filter((r) => r.id !== id));
-              Alert.alert('Success', 'Reading deleted');
-            } catch (error) {
-              Alert.alert('Error', error.message || 'Failed to delete reading');
-            }
-          },
-        },
-      ]
+  const handleDelete = async (id, value, date) => {
+    try {
+      await glucoseService.deleteReading(id);
+      // Remove from local state
+      setReadings(readings.filter((r) => r.id !== id));
+      setTodayReadings(todayReadings.filter((r) => r.id !== id));
+      setYesterdayReadings(yesterdayReadings.filter((r) => r.id !== id));
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Failed to delete reading');
+    }
+  };
+
+  const renderRightActions = (progress, dragX, item) => {
+    const scale = dragX.interpolate({
+      inputRange: [-80, 0],
+      outputRange: [1, 0],
+      extrapolate: 'clamp',
+    });
+
+    return (
+      <TouchableOpacity
+        style={styles.deleteAction}
+        onPress={() => {
+          Alert.alert(
+            'Delete Reading',
+            `Delete reading of ${item.glucose_level} mg/dL?`,
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: () => handleDelete(item.id, item.glucose_level, item.reading_time),
+              },
+            ]
+          );
+        }}
+      >
+        <Animated.View style={{ transform: [{ scale }] }}>
+          <Ionicons name="trash-outline" size={28} color="#FFF" />
+        </Animated.View>
+      </TouchableOpacity>
     );
   };
 
-  const renderReading = ({ item }) => {
-    const { backgroundColor, textColor } = glucoseService.getGlucoseCategory(
+  const renderReading = (item) => {
+    const { backgroundColor, textColor, category } = glucoseService.getGlucoseCategory(
       parseFloat(item.glucose_level)
     );
     const readingDate = new Date(item.reading_time);
 
     return (
-      <View style={[styles.readingCard, { backgroundColor }]}>
-        <View style={styles.readingMain}>
-          <View style={styles.readingLeft}>
-            <Text style={[styles.glucoseValue, { color: textColor }]}>
-              {item.glucose_level}
-            </Text>
-            <Text style={[styles.unitText, { color: textColor }]}>mg/dL</Text>
-          </View>
-
-          <View style={styles.readingRight}>
-            <Text style={styles.dateText}>
-              {readingDate.toLocaleDateString()}
-            </Text>
-            <Text style={styles.timeText}>
-              {readingDate.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </Text>
-            {item.notes ? (
-              <Text style={styles.notesText} numberOfLines={2}>
-                {item.notes}
+      <Swipeable
+        key={item.id.toString()}
+        renderRightActions={(progress, dragX) => renderRightActions(progress, dragX, item)}
+        overshootRight={false}
+        rightThreshold={40}
+      >
+        <View style={[styles.readingCard, { backgroundColor }]}>
+          <View style={styles.readingMain}>
+            <View style={styles.readingLeft}>
+              <Text style={[styles.glucoseValue, { color: textColor }]}>
+                {item.glucose_level}
               </Text>
-            ) : null}
-          </View>
+              <Text style={[styles.unitText, { color: textColor }]}>mg/dL</Text>
+              <Text style={[styles.categoryText, { color: textColor }]}>
+                {category}
+              </Text>
+            </View>
 
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => handleDelete(item.id, item.glucose_level, item.reading_time)}
-          >
-            <Ionicons name="trash-outline" size={24} color="#DC2626" />
-          </TouchableOpacity>
+            <View style={styles.readingRight}>
+              <View style={styles.timeContainer}>
+                <Ionicons name="time-outline" size={16} color="#4B5563" />
+                <Text style={styles.timeText}>
+                  {readingDate.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </View>
+              {item.notes ? (
+                <View style={styles.notesContainer}>
+                  <Ionicons name="document-text-outline" size={16} color="#6B7280" />
+                  <Text style={styles.notesText} numberOfLines={2}>
+                    {item.notes}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+
+            <Ionicons name="chevron-back-outline" size={20} color="#9CA3AF" />
+          </View>
         </View>
-      </View>
+      </Swipeable>
     );
   };
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="water-outline" size={64} color="#D1D5DB" />
+      <Ionicons name="water-outline" size={80} color="#D1D5DB" />
       <Text style={styles.emptyTitle}>No Readings Yet</Text>
       <Text style={styles.emptyText}>
         Start tracking your glucose levels by adding your first reading
@@ -125,7 +178,7 @@ export default function HistoryScreen({ navigation }) {
         style={styles.addButton}
         onPress={() => navigation.navigate('Log')}
       >
-        <Text style={styles.addButtonText}>Add Reading</Text>
+        <Text style={styles.addButtonText}>+ Add Reading</Text>
       </TouchableOpacity>
     </View>
   );
@@ -133,37 +186,89 @@ export default function HistoryScreen({ navigation }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#7B2CBF" />
+        <ActivityIndicator size="large" color="#8B5CF6" />
+        <Text style={styles.loadingText}>Loading your readings...</Text>
+      </View>
+    );
+  }
+
+  if (readings.length === 0) {
+    return (
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#8B5CF6', '#3B82F6']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}
+        >
+          <Text style={styles.title}>Glucose History</Text>
+          <Text style={styles.subtitle}>Track your glucose journey</Text>
+        </LinearGradient>
+        {renderEmpty()}
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <LinearGradient
+        colors={['#8B5CF6', '#3B82F6']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
         <Text style={styles.title}>Glucose History</Text>
         <Text style={styles.subtitle}>
-          {readings.length} {readings.length === 1 ? 'reading' : 'readings'}
+          {readings.length} {readings.length === 1 ? 'reading' : 'readings'} total
         </Text>
-      </View>
+      </LinearGradient>
 
-      <FlatList
-        data={readings}
-        renderItem={renderReading}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={
-          readings.length === 0 ? styles.emptyList : styles.list
-        }
-        ListEmptyComponent={renderEmpty}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#7B2CBF"
-            colors={['#7B2CBF']}
+            tintColor="#8B5CF6"
+            colors={['#8B5CF6']}
           />
         }
-      />
+      >
+        {/* Today's Readings */}
+        {todayReadings.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="sunny" size={24} color="#8B5CF6" />
+              <Text style={styles.sectionTitle}>Today</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{todayReadings.length}</Text>
+              </View>
+            </View>
+            {todayReadings.map(reading => renderReading(reading))}
+          </View>
+        )}
+
+        {/* Yesterday's Readings */}
+        {yesterdayReadings.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="moon" size={24} color="#6B7280" />
+              <Text style={styles.sectionTitle}>Yesterday</Text>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{yesterdayReadings.length}</Text>
+              </View>
+            </View>
+            {yesterdayReadings.map(reading => renderReading(reading))}
+          </View>
+        )}
+
+        {/* Swipe hint */}
+        <View style={styles.hintContainer}>
+          <Ionicons name="arrow-back" size={16} color="#9CA3AF" />
+          <Text style={styles.hintText}>Swipe left to delete</Text>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -179,38 +284,71 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F9FAFB',
   },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6B7280',
+  },
   header: {
-    backgroundColor: '#FFFFFF',
     padding: 20,
     paddingTop: 60,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    paddingBottom: 24,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#FFF',
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginTop: 4,
+    fontSize: 16,
+    color: '#E0E7FF',
   },
-  list: {
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     padding: 16,
+    paddingBottom: 40,
   },
-  emptyList: {
-    flexGrow: 1,
+  section: {
+    marginBottom: 32,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginLeft: 12,
+    flex: 1,
+  },
+  badge: {
+    backgroundColor: '#8B5CF6',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    minWidth: 32,
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
   readingCard: {
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 12,
-    elevation: 2,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   readingMain: {
     flexDirection: 'row',
@@ -218,41 +356,60 @@ const styles = StyleSheet.create({
   },
   readingLeft: {
     alignItems: 'center',
-    marginRight: 16,
-    minWidth: 80,
+    marginRight: 20,
+    minWidth: 90,
   },
   glucoseValue: {
-    fontSize: 36,
+    fontSize: 42,
     fontWeight: 'bold',
+    letterSpacing: -1,
   },
   unitText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: -4,
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: -2,
+    opacity: 0.8,
+  },
+  categoryText: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   readingRight: {
     flex: 1,
   },
-  dateText: {
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  timeText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 2,
+    marginLeft: 6,
   },
-  timeText: {
-    fontSize: 14,
-    color: '#4B5563',
-    marginBottom: 4,
+  notesContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 4,
   },
   notesText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#6B7280',
-    marginTop: 4,
-    fontStyle: 'italic',
+    marginLeft: 6,
+    flex: 1,
+    lineHeight: 20,
   },
-  deleteButton: {
-    padding: 8,
-    marginLeft: 8,
+  deleteAction: {
+    backgroundColor: '#DC2626',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    borderRadius: 16,
+    marginBottom: 12,
   },
   emptyContainer: {
     flex: 1,
@@ -261,27 +418,46 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   emptyTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: 20,
+    marginBottom: 12,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 17,
     color: '#6B7280',
     textAlign: 'center',
-    marginBottom: 24,
+    lineHeight: 24,
+    marginBottom: 32,
   },
   addButton: {
-    backgroundColor: '#7B2CBF',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 24,
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 40,
+    paddingVertical: 16,
+    borderRadius: 30,
+    elevation: 4,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   addButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  hintContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+    padding: 12,
+  },
+  hintText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginLeft: 8,
+    fontStyle: 'italic',
   },
 });
