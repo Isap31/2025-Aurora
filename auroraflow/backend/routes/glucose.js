@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const glucoseController = require('../controllers/glucoseController');
-const { verifyToken } = require('../middleware/auth');
+const { optionalAuth } = require('../middleware/auth');
 
-// All glucose routes require authentication
-router.post('/', verifyToken, glucoseController.createReading);
-router.get('/', verifyToken, glucoseController.getReadings);
-router.delete('/:id', verifyToken, glucoseController.deleteReading);
+// Glucose routes with optional authentication (supports guest mode)
+router.post('/', optionalAuth, glucoseController.createReading);
+router.get('/', optionalAuth, glucoseController.getReadings);
+router.delete('/:id', optionalAuth, glucoseController.deleteReading);
 
 module.exports = router;

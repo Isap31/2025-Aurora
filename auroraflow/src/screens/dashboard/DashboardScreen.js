@@ -4,330 +4,452 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   SafeAreaView,
   ScrollView,
-  Animated,
+  Pressable,
+  Alert,
+  TextInput,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import authService from '../../services/authService';
-import glucoseService from '../../services/glucoseService';
+import Modal from 'react-native-modal';
 
 export default function DashboardScreen({ navigation }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [recentGlucose, setRecentGlucose] = useState(null);
-  const [todayStats, setTodayStats] = useState({
-    meals: 0,
-    exercise: 0,
-    readings: 0,
-    sleep: 'Good',
-  });
-  const fadeAnim = useState(new Animated.Value(0))[0];
+  const [userName] = useState('Bridget'); // Mock user name
+  const [latestGlucose] = useState(142); // Mock glucose reading
+  const [glucoseTimestamp] = useState('2:15 PM today');
 
-  useEffect(() => {
-    loadDashboardData();
-    // Fade in animation
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 800,
-      useNativeDriver: true,
-    }).start();
-  }, []);
-
-  const loadDashboardData = async () => {
-    try {
-      const currentUser = await authService.getCurrentUser();
-      setUser(currentUser);
-
-      // Load recent glucose reading
-      const result = await glucoseService.getReadings();
-      const readings = result.readings || [];
-      if (readings && readings.length > 0) {
-        setRecentGlucose(readings[0]);
-
-        // Count today's readings
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayReadings = readings.filter(r => {
-          const readingDate = new Date(r.timestamp);
-          readingDate.setHours(0, 0, 0, 0);
-          return readingDate.getTime() === today.getTime();
-        });
-        setTodayStats(prev => ({ ...prev, readings: todayReadings.length }));
-      }
-    } catch (error) {
-      console.error('Error loading dashboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Modal visibility states
+  const [logGlucoseModalVisible, setLogGlucoseModalVisible] = useState(false);
+  const [logMealModalVisible, setLogMealModalVisible] = useState(false);
+  const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
+  const [insightsModalVisible, setInsightsModalVisible] = useState(false);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return { text: 'Good morning', emoji: '☀️' };
+    if (hour < 18) return { text: 'Good afternoon', emoji: '🌤️' };
+    return { text: 'Good evening', emoji: '🌙' };
   };
 
-  const handleLogout = async () => {
-    try {
-      await authService.signOut();
-      navigation.replace('Login');
-    } catch (error) {
-      console.error('Logout error:', error);
+  const getGlucoseColor = (value) => {
+    if (value >= 70 && value <= 180) {
+      return {
+        bg: '#D1FAE5',
+        text: '#059669',
+        status: 'In range ✓',
+        statusColor: '#10B981'
+      };
+    } else if ((value >= 55 && value < 70) || (value > 180 && value <= 250)) {
+      return {
+        bg: '#FEF3C7',
+        text: '#D97706',
+        status: 'Moderate',
+        statusColor: '#F59E0B'
+      };
+    } else {
+      return {
+        bg: '#FEE2E2',
+        text: '#DC2626',
+        status: 'Out of range',
+        statusColor: '#EF4444'
+      };
     }
   };
 
-  const handleRefreshInsights = () => {
-    // Placeholder for daily information generation
-    console.log('Refreshing daily insights...');
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
-      </View>
-    );
-  }
-
-  const glucoseCategory = recentGlucose
-    ? glucoseService.getGlucoseCategory(recentGlucose.value)
-    : null;
+  const greeting = getGreeting();
+  const glucoseColor = getGlucoseColor(latestGlucose);
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <Animated.View style={{ opacity: fadeAnim }}>
-          {/* Header with Logo and Glucose */}
-          <LinearGradient
-            colors={['#8B5CF6', '#3B82F6']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.header}
-          >
-            <View style={styles.headerTop}>
-              <Text style={styles.logo}>AuroraFlow</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-                <Ionicons name="person-circle" size={36} color="#FFF" />
-              </TouchableOpacity>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+      >
+        {/* 1. HEADER */}
+        <LinearGradient
+          colors={['#8B5CF6', '#3B82F6']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}
+        >
+          <View style={styles.headerContent}>
+            <View style={styles.headerLeft}>
+              <Ionicons name="water" size={24} color="#FFF" />
+              <Text style={styles.logoText}>AuroraFlow</Text>
             </View>
-
-            {recentGlucose && (
-              <View style={styles.headerGlucose}>
-                <Text style={styles.headerGlucoseLabel}>Latest Reading</Text>
-                <Text style={styles.headerGlucoseValue}>
-                  {recentGlucose.value} <Text style={styles.headerGlucoseUnit}>mg/dL</Text>
-                </Text>
-              </View>
-            )}
-          </LinearGradient>
-
-          <View style={styles.content}>
-            {/* Personalized Greeting Bubble */}
-            <View style={styles.greetingBubble}>
-              <LinearGradient
-                colors={['#F0ABFC', '#C084FC']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.greetingGradient}
-              >
-                <Ionicons name="sunny" size={32} color="#FFF" />
-                <Text style={styles.greetingText}>
-                  {getGreeting()}, {user?.name?.split(' ')[0] || 'there'}!
-                </Text>
-              </LinearGradient>
-            </View>
-
-            {/* User Profile Summary */}
-            <View style={styles.profileCard}>
-              <View style={styles.profileHeader}>
-                <Ionicons name="person" size={24} color="#8B5CF6" />
-                <Text style={styles.profileTitle}>Your Profile</Text>
-              </View>
-              <View style={styles.profileGrid}>
-                <View style={styles.profileItem}>
-                  <Text style={styles.profileLabel}>Age</Text>
-                  <Text style={styles.profileValue}>28</Text>
-                </View>
-                <View style={styles.profileItem}>
-                  <Text style={styles.profileLabel}>Gender</Text>
-                  <Text style={styles.profileValue}>Female</Text>
-                </View>
-                <View style={styles.profileItem}>
-                  <Text style={styles.profileLabel}>Diabetes Type</Text>
-                  <Text style={styles.profileValue}>Type 1</Text>
-                </View>
-                <View style={styles.profileItem}>
-                  <Text style={styles.profileLabel}>Height</Text>
-                  <Text style={styles.profileValue}>5'6"</Text>
-                </View>
-                <View style={styles.profileItem}>
-                  <Text style={styles.profileLabel}>Weight</Text>
-                  <Text style={styles.profileValue}>135 lbs</Text>
-                </View>
-                <View style={styles.profileItem}>
-                  <Text style={styles.profileLabel}>Sleep Quality</Text>
-                  <Text style={styles.profileValue}>Good 😊</Text>
-                </View>
-                <View style={styles.profileItem}>
-                  <Text style={styles.profileLabel}>Stress Level</Text>
-                  <Text style={styles.profileValue}>Low ✨</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Daily Information Generation */}
-            <View style={styles.dailyInfoCard}>
-              <View style={styles.dailyInfoHeader}>
-                <View style={styles.dailyInfoTitleRow}>
-                  <Ionicons name="star" size={24} color="#F59E0B" />
-                  <Text style={styles.dailyInfoTitle}>Daily Information Generation</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.refreshButton}
-                  onPress={handleRefreshInsights}
-                >
-                  <Ionicons name="refresh" size={20} color="#8B5CF6" />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.dailyInfoText}>
-                Based on your recent activity, your glucose levels are stable. Keep maintaining your current routine! 💙
-              </Text>
-            </View>
-
-            {/* Quick Actions Grid */}
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-            <View style={styles.quickActionsGrid}>
-              <TouchableOpacity
-                style={styles.quickActionButton}
-                onPress={() => navigation.navigate('LogGlucose')}
-              >
-                <LinearGradient
-                  colors={['#8B5CF6', '#7C3AED']}
-                  style={styles.quickActionGradient}
-                >
-                  <Ionicons name="water" size={40} color="#FFF" />
-                  <Text style={styles.quickActionText}>Log Glucose</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.quickActionButton}
-                onPress={() => console.log('Log Meal')}
-              >
-                <LinearGradient
-                  colors={['#10B981', '#059669']}
-                  style={styles.quickActionGradient}
-                >
-                  <Ionicons name="restaurant" size={40} color="#FFF" />
-                  <Text style={styles.quickActionText}>Log Meal</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.quickActionButton}
-                onPress={() => console.log('Exercise')}
-              >
-                <LinearGradient
-                  colors={['#F59E0B', '#D97706']}
-                  style={styles.quickActionGradient}
-                >
-                  <Ionicons name="fitness" size={40} color="#FFF" />
-                  <Text style={styles.quickActionText}>Exercise</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.quickActionButton}
-                onPress={() => navigation.navigate('Insights')}
-              >
-                <LinearGradient
-                  colors={['#3B82F6', '#2563EB']}
-                  style={styles.quickActionGradient}
-                >
-                  <Ionicons name="bulb" size={40} color="#FFF" />
-                  <Text style={styles.quickActionText}>Insights</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-
-            {/* Aurora Assistant Section */}
-            <View style={styles.auroraCard}>
-              <LinearGradient
-                colors={['#EC4899', '#8B5CF6']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.auroraGradient}
-              >
-                <View style={styles.auroraHeader}>
-                  <Ionicons name="star" size={28} color="#FFF" />
-                  <Text style={styles.auroraTitle}>Aurora - your daily assistant</Text>
-                </View>
-                <Text style={styles.auroraSubtitle}>
-                  Ask me anything about your diabetes management!
-                </Text>
-                <TouchableOpacity
-                  style={styles.auroraButton}
-                  onPress={() => console.log('Chat with Aurora')}
-                >
-                  <Text style={styles.auroraButtonText}>Chat with Aurora</Text>
-                  <Ionicons name="arrow-forward" size={20} color="#8B5CF6" />
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
-
-            {/* Today's Summary Card */}
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryHeader}>
-                <Ionicons name="calendar" size={24} color="#3B82F6" />
-                <Text style={styles.summaryTitle}>Today's Summary</Text>
-              </View>
-              <View style={styles.summaryGrid}>
-                <View style={styles.summaryItem}>
-                  <View style={styles.summaryIconBg}>
-                    <Ionicons name="restaurant" size={24} color="#10B981" />
-                  </View>
-                  <Text style={styles.summaryValue}>{todayStats.meals}</Text>
-                  <Text style={styles.summaryLabel}>Meals</Text>
-                </View>
-                <View style={styles.summaryItem}>
-                  <View style={styles.summaryIconBg}>
-                    <Ionicons name="fitness" size={24} color="#F59E0B" />
-                  </View>
-                  <Text style={styles.summaryValue}>{todayStats.exercise}</Text>
-                  <Text style={styles.summaryLabel}>Exercise</Text>
-                </View>
-                <View style={styles.summaryItem}>
-                  <View style={styles.summaryIconBg}>
-                    <Ionicons name="water" size={24} color="#8B5CF6" />
-                  </View>
-                  <Text style={styles.summaryValue}>{todayStats.readings}</Text>
-                  <Text style={styles.summaryLabel}>Readings</Text>
-                </View>
-                <View style={styles.summaryItem}>
-                  <View style={styles.summaryIconBg}>
-                    <Ionicons name="moon" size={24} color="#6366F1" />
-                  </View>
-                  <Text style={styles.summaryValue}>{todayStats.sleep}</Text>
-                  <Text style={styles.summaryLabel}>Sleep</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Logout Button */}
             <TouchableOpacity
-              style={styles.logoutButton}
-              onPress={handleLogout}
+              onPress={() => navigation.navigate('Profile')}
+              style={styles.profileButton}
             >
-              <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-              <Text style={styles.logoutText}>Logout</Text>
+              <Ionicons name="person-circle" size={36} color="#FFF" />
             </TouchableOpacity>
           </View>
-        </Animated.View>
+
+          <View style={styles.glucoseBadge}>
+            <Text style={styles.glucoseHeaderValue}>{latestGlucose}</Text>
+            <Text style={styles.glucoseHeaderUnit}>mg/dL</Text>
+          </View>
+        </LinearGradient>
+
+        {/* 2. PERSONALIZED GREETING CARD */}
+        <View style={styles.greetingCard}>
+          <Text style={styles.greetingText}>
+            {greeting.text}, {userName}! {greeting.emoji}
+          </Text>
+        </View>
+
+        {/* 3. RECENT GLUCOSE CARD */}
+        <View style={[styles.glucoseCard, { backgroundColor: glucoseColor.bg }]}>
+          <Text style={styles.glucoseCardTitle}>Latest Reading</Text>
+          <Text style={[styles.glucoseCardValue, { color: glucoseColor.text }]}>
+            {latestGlucose} <Text style={styles.glucoseCardUnit}>mg/dL</Text>
+          </Text>
+          <Text style={styles.glucoseTimestamp}>{glucoseTimestamp}</Text>
+          <Text style={[styles.glucoseStatus, { color: glucoseColor.statusColor }]}>
+            {glucoseColor.status}
+          </Text>
+        </View>
+
+        {/* 4. WEEKLY STATS ROW */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Ionicons name="analytics" size={32} color="#8B5CF6" />
+            <Text style={styles.statValue}>135</Text>
+            <Text style={styles.statLabel}>mg/dL</Text>
+            <Text style={styles.statSubLabel}>Average</Text>
+          </View>
+
+          <View style={styles.statCard}>
+            <Ionicons name="checkmark-circle" size={32} color="#10B981" />
+            <Text style={styles.statValue}>78%</Text>
+            <Text style={styles.statLabel}>Time in</Text>
+            <Text style={styles.statSubLabel}>Range</Text>
+          </View>
+
+          <View style={styles.statCard}>
+            <Ionicons name="clipboard" size={32} color="#3B82F6" />
+            <Text style={styles.statValue}>42</Text>
+            <Text style={styles.statLabel}>Total</Text>
+            <Text style={styles.statSubLabel}>Logs</Text>
+          </View>
+        </View>
+
+        {/* 5. QUICK ACTIONS GRID */}
+        <View style={styles.quickActionsContainer}>
+          {/* Log Glucose */}
+          <Pressable
+            onPress={() => setLogGlucoseModalVisible(true)}
+            style={({ pressed }) => [
+              styles.quickActionButton,
+              pressed && styles.quickActionPressed
+            ]}
+          >
+            <LinearGradient
+              colors={['#8B5CF6', '#7C3AED']}
+              style={styles.quickActionGradient}
+            >
+              <Text style={styles.quickActionIcon}>🩸</Text>
+              <Text style={styles.quickActionLabel}>Log Glucose</Text>
+            </LinearGradient>
+          </Pressable>
+
+          {/* Log Meal */}
+          <Pressable
+            onPress={() => setLogMealModalVisible(true)}
+            style={({ pressed }) => [
+              styles.quickActionButton,
+              pressed && styles.quickActionPressed
+            ]}
+          >
+            <LinearGradient
+              colors={['#F97316', '#EA580C']}
+              style={styles.quickActionGradient}
+            >
+              <Text style={styles.quickActionIcon}>🍽️</Text>
+              <Text style={styles.quickActionLabel}>Log Meal</Text>
+            </LinearGradient>
+          </Pressable>
+
+          {/* Exercise */}
+          <Pressable
+            onPress={() => setExerciseModalVisible(true)}
+            style={({ pressed }) => [
+              styles.quickActionButton,
+              pressed && styles.quickActionPressed
+            ]}
+          >
+            <LinearGradient
+              colors={['#3B82F6', '#2563EB']}
+              style={styles.quickActionGradient}
+            >
+              <Text style={styles.quickActionIcon}>💪</Text>
+              <Text style={styles.quickActionLabel}>Exercise</Text>
+            </LinearGradient>
+          </Pressable>
+
+          {/* FlowSense AI */}
+          <Pressable
+            onPress={() => setInsightsModalVisible(true)}
+            style={({ pressed }) => [
+              styles.quickActionButton,
+              pressed && styles.quickActionPressed
+            ]}
+          >
+            <LinearGradient
+              colors={['#10B981', '#059669']}
+              style={styles.quickActionGradient}
+            >
+              <Text style={styles.quickActionIcon}>💡</Text>
+              <Text style={styles.quickActionLabel}>FlowSense AI</Text>
+            </LinearGradient>
+          </Pressable>
+        </View>
+
+        {/* 6. TODAY'S INSIGHT CARD */}
+        <View style={styles.insightCard}>
+          <Text style={styles.insightIcon}>💡</Text>
+          <View style={styles.insightContent}>
+            <Text style={styles.insightTitle}>Today's Insight</Text>
+            <Text style={styles.insightText}>
+              Great job staying in range today!
+            </Text>
+          </View>
+        </View>
+
+        {/* 7. AURORA ASSISTANT TEASER */}
+        <View style={styles.auroraCard}>
+          <View style={styles.auroraHeader}>
+            <Text style={styles.auroraIcon}>🤖</Text>
+            <View style={styles.comingSoonBadge}>
+              <Text style={styles.comingSoonText}>Coming Soon</Text>
+            </View>
+          </View>
+          <Text style={styles.auroraTitle}>Aurora - your daily assistant</Text>
+          <Text style={styles.auroraSubtitle}>
+            Ask me anything about managing diabetes
+          </Text>
+        </View>
+
+        {/* Bottom padding */}
+        <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* LOG GLUCOSE MODAL */}
+      <Modal
+        isVisible={logGlucoseModalVisible}
+        onBackdropPress={() => setLogGlucoseModalVisible(false)}
+        onSwipeComplete={() => setLogGlucoseModalVisible(false)}
+        swipeDirection="down"
+        style={styles.modal}
+      >
+        <View style={styles.modalContent}>
+          <View style={styles.modalHandle} />
+          <Text style={styles.modalTitle}>Log Glucose</Text>
+
+          <TextInput
+            style={styles.modalInput}
+            placeholder="Enter glucose reading (mg/dL)"
+            keyboardType="numeric"
+            placeholderTextColor="#9CA3AF"
+          />
+
+          <Text style={styles.modalLabel}>Time</Text>
+          <Text style={styles.modalTimeValue}>Now (1:38 PM)</Text>
+
+          <TextInput
+            style={[styles.modalInput, styles.notesInput]}
+            placeholder="Add any notes about this reading..."
+            multiline
+            numberOfLines={3}
+            placeholderTextColor="#9CA3AF"
+          />
+
+          <View style={styles.modalButtons}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setLogGlucoseModalVisible(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.saveButton}>
+              <Text style={styles.saveButtonText}>💾 Save Reading</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* LOG MEAL MODAL */}
+      <Modal
+        isVisible={logMealModalVisible}
+        onBackdropPress={() => setLogMealModalVisible(false)}
+        onSwipeComplete={() => setLogMealModalVisible(false)}
+        swipeDirection="down"
+        style={styles.modal}
+      >
+        <View style={styles.modalContent}>
+          <View style={styles.modalHandle} />
+          <Text style={styles.modalTitle}>Log Meal</Text>
+
+          <Text style={styles.modalLabel}>Meal Name</Text>
+          <TextInput
+            style={styles.modalInput}
+            placeholder="e.g., Grilled Chicken Salad"
+            placeholderTextColor="#9CA3AF"
+          />
+
+          <View style={styles.modalRow}>
+            <View style={styles.modalHalfInput}>
+              <Text style={styles.modalLabel}>Carbohydrates (g) *</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="35"
+                keyboardType="numeric"
+                placeholderTextColor="#9CA3AF"
+              />
+              <Text style={styles.modalHint}>Critical for glucose prediction</Text>
+            </View>
+
+            <View style={styles.modalHalfInput}>
+              <Text style={styles.modalLabel}>Calories</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="450"
+                keyboardType="numeric"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+          </View>
+
+          <Text style={styles.modalLabel}>Time of Meal</Text>
+          <Text style={styles.modalTimeValue}>01:38 PM</Text>
+
+          <Text style={styles.modalLabel}>Notes (Optional)</Text>
+          <TextInput
+            style={[styles.modalInput, styles.notesInput]}
+            placeholder="Add any notes about this meal..."
+            multiline
+            numberOfLines={3}
+            placeholderTextColor="#9CA3AF"
+          />
+
+          <View style={styles.aiNote}>
+            <Text style={styles.aiNoteText}>
+              🤖 AI Integration: Carb content and meal timing are key factors for glucose predictions.
+            </Text>
+          </View>
+
+          <View style={styles.modalButtons}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setLogMealModalVisible(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.saveButton}>
+              <Text style={styles.saveButtonText}>💾 Save Meal</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* EXERCISE MODAL */}
+      <Modal
+        isVisible={exerciseModalVisible}
+        onBackdropPress={() => setExerciseModalVisible(false)}
+        onSwipeComplete={() => setExerciseModalVisible(false)}
+        swipeDirection="down"
+        style={styles.modal}
+      >
+        <View style={styles.modalContent}>
+          <View style={styles.modalHandle} />
+          <Text style={styles.modalTitle}>Log Exercise</Text>
+
+          <Text style={styles.modalLabel}>Activity Type</Text>
+          <TextInput
+            style={styles.modalInput}
+            placeholder="e.g., Walking, Running, Yoga"
+            placeholderTextColor="#9CA3AF"
+          />
+
+          <View style={styles.modalRow}>
+            <View style={styles.modalHalfInput}>
+              <Text style={styles.modalLabel}>Duration (minutes)</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="30"
+                keyboardType="numeric"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+
+            <View style={styles.modalHalfInput}>
+              <Text style={styles.modalLabel}>Intensity</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Low/Medium/High"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+          </View>
+
+          <Text style={styles.modalLabel}>Notes (Optional)</Text>
+          <TextInput
+            style={[styles.modalInput, styles.notesInput]}
+            placeholder="How did you feel during exercise?"
+            multiline
+            numberOfLines={3}
+            placeholderTextColor="#9CA3AF"
+          />
+
+          <View style={styles.modalButtons}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setExerciseModalVisible(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.saveButton}>
+              <Text style={styles.saveButtonText}>💾 Save Exercise</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* FLOWSENSE AI MODAL */}
+      <Modal
+        isVisible={insightsModalVisible}
+        onBackdropPress={() => setInsightsModalVisible(false)}
+        onSwipeComplete={() => setInsightsModalVisible(false)}
+        swipeDirection="down"
+        style={styles.modal}
+      >
+        <View style={styles.modalContent}>
+          <View style={styles.modalHandle} />
+          <Text style={styles.modalTitle}>🤖 FlowSense AI</Text>
+
+          <Text style={styles.comingSoonText}>
+            Your AI assistant is coming soon!
+          </Text>
+
+          <Text style={styles.comingSoonDescription}>
+            Aurora will help you understand your glucose patterns, predict future readings,
+            and give personalized insights based on your unique data.
+          </Text>
+
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={() => setInsightsModalVisible(false)}
+          >
+            <Text style={styles.saveButtonText}>Can't Wait!</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -337,313 +459,384 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-  },
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 24,
+  },
+
+  // 1. HEADER STYLES
   header: {
-    paddingTop: 20,
-    paddingBottom: 30,
+    height: 100,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  logo: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-  headerGlucose: {
-    alignItems: 'center',
-  },
-  headerGlucoseLabel: {
-    fontSize: 14,
-    color: '#E0E7FF',
-    marginBottom: 4,
-  },
-  headerGlucoseValue: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  headerGlucoseUnit: {
-    fontSize: 20,
-    fontWeight: 'normal',
-  },
-  content: {
-    padding: 20,
-  },
-  greetingBubble: {
-    marginTop: -20,
-    marginBottom: 20,
-    borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  greetingGradient: {
-    padding: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  greetingText: {
-    flex: 1,
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  profileCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  profileTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1F2937',
-  },
-  profileGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  profileItem: {
-    width: '30%',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-  },
-  profileLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  profileValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    textAlign: 'center',
-  },
-  dailyInfoCard: {
-    backgroundColor: '#FFFBEB',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: '#FCD34D',
-  },
-  dailyInfoHeader: {
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  dailyInfoTitleRow: {
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    flex: 1,
   },
-  dailyInfoTitle: {
-    fontSize: 18,
+  logoText: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#92400E',
-    flex: 1,
+    color: '#FFF',
+    marginLeft: 8,
   },
-  refreshButton: {
-    backgroundColor: '#FEF3C7',
-    borderRadius: 12,
-    padding: 8,
+  profileButton: {
+    padding: 4,
   },
-  dailyInfoText: {
+  glucoseBadge: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    backgroundColor: '#10B981',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+  },
+  glucoseHeaderValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  glucoseHeaderUnit: {
+    fontSize: 14,
+    color: '#FFF',
+    marginLeft: 4,
+    opacity: 0.9,
+  },
+
+  // 2. GREETING CARD STYLES
+  greetingCard: {
+    backgroundColor: '#F3E8FF',
+    marginHorizontal: 16,
+    marginTop: 20,
+    padding: 24,
+    borderRadius: 16,
+  },
+  greetingText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#7C3AED',
+    textAlign: 'center',
+  },
+
+  // 3. RECENT GLUCOSE CARD STYLES
+  glucoseCard: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  glucoseCardTitle: {
     fontSize: 16,
-    color: '#78350F',
-    lineHeight: 24,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 12,
   },
-  sectionTitle: {
-    fontSize: 22,
+  glucoseCardValue: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  glucoseCardUnit: {
+    fontSize: 24,
+    fontWeight: '600',
+  },
+  glucoseTimestamp: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 8,
+  },
+  glucoseStatus: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+
+  // 4. WEEKLY STATS ROW STYLES
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginTop: 16,
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#FFF',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statValue: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 16,
+    marginTop: 8,
   },
-  quickActionsGrid: {
+  statLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  statSubLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+
+  // 5. QUICK ACTIONS STYLES
+  quickActionsContainer: {
+    marginHorizontal: 16,
+    marginTop: 20,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 20,
+    justifyContent: 'space-between',
   },
   quickActionButton: {
     width: '48%',
-    borderRadius: 16,
+    aspectRatio: 1,
+    borderRadius: 20,
     overflow: 'hidden',
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 4,
+  },
+  quickActionPressed: {
+    transform: [{ scale: 0.95 }],
   },
   quickActionGradient: {
-    padding: 24,
-    alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
-    minHeight: 120,
-    gap: 12,
+    alignItems: 'center',
+    padding: 16,
   },
-  quickActionText: {
-    color: '#FFFFFF',
+  quickActionIcon: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  quickActionLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    color: '#FFF',
     textAlign: 'center',
   },
-  auroraCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  auroraGradient: {
-    padding: 24,
-  },
-  auroraHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 8,
-  },
-  auroraTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  auroraSubtitle: {
-    fontSize: 16,
-    color: '#F3E8FF',
-    marginBottom: 16,
-  },
-  auroraButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+
+  // 6. TODAY'S INSIGHT STYLES
+  insightCard: {
+    backgroundColor: '#DBEAFE',
+    marginHorizontal: 16,
+    marginTop: 16,
     padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  auroraButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#8B5CF6',
-  },
-  summaryCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  summaryHeader: {
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 20,
   },
-  summaryTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1F2937',
+  insightIcon: {
+    fontSize: 28,
+    marginRight: 12,
   },
-  summaryGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  summaryItem: {
-    alignItems: 'center',
+  insightContent: {
     flex: 1,
   },
-  summaryIconBg: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 16,
-    width: 56,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  summaryValue: {
-    fontSize: 24,
+  insightTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 4,
   },
-  summaryLabel: {
+  insightText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#4B5563',
+    lineHeight: 20,
   },
-  logoutButton: {
+
+  // 7. AURORA ASSISTANT STYLES
+  auroraCard: {
+    backgroundColor: '#F3E8FF',
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 12,
+  },
+  auroraHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
-    backgroundColor: '#FEE2E2',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  auroraIcon: {
+    fontSize: 32,
+  },
+  comingSoonBadge: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 12,
+  },
+  comingSoonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFF',
+  },
+  auroraTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#7C3AED',
+    marginBottom: 4,
+  },
+  auroraSubtitle: {
+    fontSize: 14,
+    color: '#8B5CF6',
+    lineHeight: 20,
+  },
+
+  // BOTTOM PADDING
+  bottomPadding: {
+    height: 20,
+  },
+
+  // MODAL STYLES
+  modal: {
+    justifyContent: 'flex-end',
+    margin: 0,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    maxHeight: '85%',
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#D1D5DB',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1F2937',
     marginBottom: 20,
   },
-  logoutText: {
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4B5563',
+    marginBottom: 8,
+    marginTop: 12,
+  },
+  modalInput: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 12,
+  },
+  modalTimeValue: {
+    fontSize: 16,
+    color: '#1F2937',
+    padding: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  modalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalHalfInput: {
+    width: '48%',
+  },
+  modalHint: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: -8,
+    marginBottom: 12,
+  },
+  notesInput: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  aiNote: {
+    backgroundColor: '#EFF6FF',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 12,
+  },
+  aiNoteText: {
+    fontSize: 14,
+    color: '#1E40AF',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#EF4444',
+    color: '#6B7280',
+  },
+  saveButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#8B5CF6',
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+  },
+  comingSoonText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  comingSoonDescription: {
+    fontSize: 16,
+    color: '#6B7280',
+    lineHeight: 24,
+    marginBottom: 24,
+    textAlign: 'center',
   },
 });

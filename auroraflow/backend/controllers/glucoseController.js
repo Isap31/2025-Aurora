@@ -1,4 +1,4 @@
-const db = require('../config/database');
+const memoryStore = require('../storage/memoryStore');
 
 // Create a new glucose reading
 const createReading = async (req, res) => {
@@ -20,23 +20,17 @@ const createReading = async (req, res) => {
       });
     }
 
-    // Insert glucose reading into database
-    const query = `
-      INSERT INTO glucose_readings (user_id, glucose_level, reading_time, notes)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id, user_id, glucose_level, reading_time, notes, created_at
-    `;
-
-    const result = await db.query(query, [
+    // Create reading in memory store
+    const reading = await memoryStore.createReading(
       userId,
       value,
       timestamp,
-      notes || null,
-    ]);
+      notes
+    );
 
     res.status(201).json({
       success: true,
-      reading: result.rows[0],
+      reading: reading,
     });
   } catch (error) {
     console.error('Create reading error:', error);
@@ -52,20 +46,13 @@ const getReadings = async (req, res) => {
   try {
     const userId = req.userId; // from JWT middleware
 
-    // Get readings ordered by newest first
-    const query = `
-      SELECT id, user_id, glucose_level, reading_time, notes, created_at
-      FROM glucose_readings
-      WHERE user_id = $1
-      ORDER BY reading_time DESC
-    `;
-
-    const result = await db.query(query, [userId]);
+    // Get readings from memory store
+    const readings = await memoryStore.getReadings(userId);
 
     res.status(200).json({
       success: true,
-      readings: result.rows,
-      count: result.rows.length,
+      readings: readings,
+      count: readings.length,
     });
   } catch (error) {
     console.error('Get readings error:', error);
@@ -88,16 +75,10 @@ const deleteReading = async (req, res) => {
       });
     }
 
-    // Delete only if the reading belongs to the user
-    const query = `
-      DELETE FROM glucose_readings
-      WHERE id = $1 AND user_id = $2
-      RETURNING id
-    `;
+    // Delete from memory store
+    const deleted = await memoryStore.deleteReading(userId, id);
 
-    const result = await db.query(query, [id, userId]);
-
-    if (result.rows.length === 0) {
+    if (!deleted) {
       return res.status(404).json({
         error: 'Reading not found or unauthorized',
       });
@@ -106,7 +87,7 @@ const deleteReading = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Reading deleted successfully',
-      id: result.rows[0].id,
+      id: deleted.id,
     });
   } catch (error) {
     console.error('Delete reading error:', error);
