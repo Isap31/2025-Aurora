@@ -9,6 +9,7 @@ import {
   Pressable,
   Alert,
   TextInput,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,8 +45,14 @@ const getRandomAffirmation = () => {
 
 export default function DashboardScreen({ navigation }) {
   const [userName] = useState('Bridget'); // Mock user name
-  const [latestGlucose] = useState(142); // Mock glucose reading
-  const [glucoseTimestamp] = useState('2:15 PM today');
+
+  // Real data from API
+  const [latestGlucose, setLatestGlucose] = useState(null);
+  const [weeklyAverage, setWeeklyAverage] = useState(135);
+  const [timeInRange, setTimeInRange] = useState(78);
+  const [totalLogs, setTotalLogs] = useState(42);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Modal visibility states
   const [logGlucoseModalVisible, setLogGlucoseModalVisible] = useState(false);
@@ -53,12 +60,17 @@ export default function DashboardScreen({ navigation }) {
   const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
   const [insightsModalVisible, setInsightsModalVisible] = useState(false);
 
+  // Modal input states
+  const [glucoseValue, setGlucoseValue] = useState('');
+  const [glucoseNotes, setGlucoseNotes] = useState('');
+
   // Daily affirmation state
   const [dailyAffirmation, setDailyAffirmation] = useState('');
 
   // Set random affirmation on mount
   useEffect(() => {
     setDailyAffirmation(getRandomAffirmation());
+    loadDashboard();
   }, []);
 
   const getGreeting = () => {
@@ -66,6 +78,114 @@ export default function DashboardScreen({ navigation }) {
     if (hour < 12) return { text: 'Good morning', emoji: '☀️' };
     if (hour < 18) return { text: 'Good afternoon', emoji: '🌤️' };
     return { text: 'Good evening', emoji: '🌙' };
+  };
+
+  // API Fetch Functions
+  const fetchLatestGlucose = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/glucose/recent');
+      const data = await response.json();
+      if (data && data.length > 0) {
+        setLatestGlucose(data[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching glucose:', error);
+    }
+  };
+
+  const fetchWeeklyStats = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/glucose/stats?days=7');
+      const data = await response.json();
+      setWeeklyAverage(Math.round(data.average));
+      setTimeInRange(Math.round(data.timeInRange));
+      setTotalLogs(data.count);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
+  const loadDashboard = async () => {
+    setLoading(true);
+    await Promise.all([fetchLatestGlucose(), fetchWeeklyStats()]);
+    setLoading(false);
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadDashboard();
+    setRefreshing(false);
+  };
+
+  // Helper Functions
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return 'No recent reading';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+
+    const timeString = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+
+    return isToday ? `${timeString} today` : `${timeString} on ${date.toLocaleDateString()}`;
+  };
+
+  const getGlucoseColorValue = (value) => {
+    if (!value) return '#10B981';
+    if (value >= 70 && value <= 180) return '#10B981';
+    if (value >= 55 && value < 70) return '#F59E0B';
+    if (value > 180 && value <= 250) return '#F59E0B';
+    return '#EF4444';
+  };
+
+  const getGlucoseStatus = (value) => {
+    if (!value) return 'No data';
+    if (value >= 70 && value <= 180) return 'In range ✓';
+    if (value >= 55 && value < 70) return 'Getting low ⚠️';
+    if (value > 180 && value <= 250) return 'A bit high ⚠️';
+    if (value < 55) return 'Very low! 🚨';
+    return 'Very high! 🚨';
+  };
+
+  const saveGlucoseReading = async () => {
+    if (!glucoseValue) {
+      Alert.alert('Error', 'Please enter a glucose reading');
+      return;
+    }
+
+    const parsedValue = parseInt(glucoseValue);
+    if (parsedValue < 20 || parsedValue > 600) {
+      Alert.alert('Error', 'Please enter a valid value (20-600 mg/dL)');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3000/api/glucose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          value: parsedValue,
+          notes: glucoseNotes,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (response.ok) {
+        Alert.alert('Success! ✅', 'Glucose reading saved');
+        setGlucoseValue('');
+        setGlucoseNotes('');
+        setLogGlucoseModalVisible(false);
+        await loadDashboard();
+      } else {
+        const errorData = await response.json();
+        Alert.alert('Error', errorData.error || 'Failed to save reading');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      Alert.alert('Error', 'Failed to save reading');
+    }
   };
 
   const getGlucoseColor = (value) => {
@@ -94,7 +214,7 @@ export default function DashboardScreen({ navigation }) {
   };
 
   const greeting = getGreeting();
-  const glucoseColor = getGlucoseColor(latestGlucose);
+  const glucoseColor = getGlucoseColor(latestGlucose?.glucose_level);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -103,6 +223,14 @@ export default function DashboardScreen({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         bounces={true}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#8B5CF6']}
+            tintColor="#8B5CF6"
+          />
+        }
       >
         {/* 1. HEADER */}
         <LinearGradient
@@ -124,8 +252,8 @@ export default function DashboardScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.glucoseBadge}>
-            <Text style={styles.glucoseHeaderValue}>{latestGlucose}</Text>
+          <View style={[styles.glucoseBadge, { backgroundColor: getGlucoseColorValue(latestGlucose?.glucose_level) }]}>
+            <Text style={styles.glucoseHeaderValue}>{latestGlucose?.glucose_level || '--'}</Text>
             <Text style={styles.glucoseHeaderUnit}>mg/dL</Text>
           </View>
         </LinearGradient>
@@ -141,11 +269,11 @@ export default function DashboardScreen({ navigation }) {
         <View style={[styles.glucoseCard, { backgroundColor: glucoseColor.bg }]}>
           <Text style={styles.glucoseCardTitle}>Latest Reading</Text>
           <Text style={[styles.glucoseCardValue, { color: glucoseColor.text }]}>
-            {latestGlucose} <Text style={styles.glucoseCardUnit}>mg/dL</Text>
+            {latestGlucose?.glucose_level || '--'} <Text style={styles.glucoseCardUnit}>mg/dL</Text>
           </Text>
-          <Text style={styles.glucoseTimestamp}>{glucoseTimestamp}</Text>
+          <Text style={styles.glucoseTimestamp}>{formatTimestamp(latestGlucose?.reading_time)}</Text>
           <Text style={[styles.glucoseStatus, { color: glucoseColor.statusColor }]}>
-            {glucoseColor.status}
+            {getGlucoseStatus(latestGlucose?.glucose_level)}
           </Text>
         </View>
 
@@ -153,21 +281,21 @@ export default function DashboardScreen({ navigation }) {
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Ionicons name="analytics" size={32} color="#8B5CF6" />
-            <Text style={styles.statValue}>135</Text>
+            <Text style={styles.statValue}>{weeklyAverage}</Text>
             <Text style={styles.statLabel}>mg/dL</Text>
             <Text style={styles.statSubLabel}>Average</Text>
           </View>
 
           <View style={styles.statCard}>
             <Ionicons name="checkmark-circle" size={32} color="#10B981" />
-            <Text style={styles.statValue}>78%</Text>
+            <Text style={styles.statValue}>{timeInRange}%</Text>
             <Text style={styles.statLabel}>Time in</Text>
             <Text style={styles.statSubLabel}>Range</Text>
           </View>
 
           <View style={styles.statCard}>
             <Ionicons name="clipboard" size={32} color="#3B82F6" />
-            <Text style={styles.statValue}>42</Text>
+            <Text style={styles.statValue}>{totalLogs}</Text>
             <Text style={styles.statLabel}>Total</Text>
             <Text style={styles.statSubLabel}>Logs</Text>
           </View>
@@ -296,10 +424,14 @@ export default function DashboardScreen({ navigation }) {
             placeholder="Enter glucose reading (mg/dL)"
             keyboardType="numeric"
             placeholderTextColor="#9CA3AF"
+            value={glucoseValue}
+            onChangeText={setGlucoseValue}
           />
 
           <Text style={styles.modalLabel}>Time</Text>
-          <Text style={styles.modalTimeValue}>Now (1:38 PM)</Text>
+          <Text style={styles.modalTimeValue}>
+            {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+          </Text>
 
           <TextInput
             style={[styles.modalInput, styles.notesInput]}
@@ -307,6 +439,8 @@ export default function DashboardScreen({ navigation }) {
             multiline
             numberOfLines={3}
             placeholderTextColor="#9CA3AF"
+            value={glucoseNotes}
+            onChangeText={setGlucoseNotes}
           />
 
           <View style={styles.modalButtons}>
@@ -317,7 +451,10 @@ export default function DashboardScreen({ navigation }) {
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.saveButton}>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={saveGlucoseReading}
+            >
               <Text style={styles.saveButtonText}>💾 Save Reading</Text>
             </TouchableOpacity>
           </View>

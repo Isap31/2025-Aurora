@@ -98,8 +98,82 @@ const deleteReading = async (req, res) => {
   }
 };
 
+// Get recent glucose readings (for dashboard)
+const getRecentReadings = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const limit = parseInt(req.query.limit) || 5;
+
+    const readings = await memoryStore.getReadings(userId);
+    const sortedReadings = readings
+      .sort((a, b) => new Date(b.reading_time || b.timestamp) - new Date(a.reading_time || a.timestamp))
+      .slice(0, limit);
+
+    res.status(200).json(sortedReadings);
+  } catch (error) {
+    console.error('Get recent readings error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch recent glucose readings',
+      message: error.message,
+    });
+  }
+};
+
+// Get glucose statistics
+const getStats = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const days = parseInt(req.query.days) || 7;
+
+    const readings = await memoryStore.getReadings(userId);
+
+    // Filter readings within the specified days
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    const filteredReadings = readings.filter(r =>
+      new Date(r.reading_time || r.timestamp) >= cutoffDate
+    );
+
+    if (filteredReadings.length === 0) {
+      return res.status(200).json({
+        average: 0,
+        timeInRange: 0,
+        count: 0
+      });
+    }
+
+    // Calculate average (support both glucose_level and value fields)
+    const sum = filteredReadings.reduce((acc, r) => acc + (r.glucose_level || r.value), 0);
+    const average = sum / filteredReadings.length;
+
+    // Calculate time in range (70-180 mg/dL)
+    const inRange = filteredReadings.filter(r => {
+      const level = r.glucose_level || r.value;
+      return level >= 70 && level <= 180;
+    });
+    const timeInRange = (inRange.length / filteredReadings.length) * 100;
+
+    res.status(200).json({
+      average,
+      timeInRange,
+      count: filteredReadings.length,
+      min: Math.min(...filteredReadings.map(r => r.glucose_level || r.value)),
+      max: Math.max(...filteredReadings.map(r => r.glucose_level || r.value))
+    });
+  } catch (error) {
+    console.error('Get stats error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch glucose statistics',
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createReading,
   getReadings,
   deleteReading,
+  getRecentReadings,
+  getStats,
 };

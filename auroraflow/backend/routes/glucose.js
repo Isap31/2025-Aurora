@@ -6,6 +6,8 @@ const { optionalAuth } = require('../middleware/auth');
 // Glucose routes with optional authentication (supports guest mode)
 router.post('/', optionalAuth, glucoseController.createReading);
 router.get('/', optionalAuth, glucoseController.getReadings);
+router.get('/recent', optionalAuth, glucoseController.getRecentReadings);
+router.get('/stats', optionalAuth, glucoseController.getStats);
 router.delete('/:id', optionalAuth, glucoseController.deleteReading);
 
 module.exports = router;

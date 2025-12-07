@@ -12,8 +12,7 @@ import DashboardScreen from './src/screens/dashboard/DashboardScreen';
 import LogGlucoseScreen from './src/screens/glucose/LogGlucoseScreen';
 import HistoryScreen from './src/screens/glucose/HistoryScreen';
 import GraphScreen from './src/screens/glucose/GraphScreen';
-import HomeScreen from './screens/HomeScreen';
-import SettingsScreen from './screens/SettingsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 
 // Import auth service
 import authService from './src/services/authService';
@@ -44,7 +43,7 @@ function MainTabs() {
       <Tab.Screen name="Log" component={LogGlucoseScreen} />
       <Tab.Screen name="History" component={HistoryScreen} />
       <Tab.Screen name="Graph" component={GraphScreen} />
-      <Tab.Screen name="Profile" component={SettingsScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
