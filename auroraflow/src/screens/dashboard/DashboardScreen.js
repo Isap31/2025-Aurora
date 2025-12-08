@@ -59,6 +59,7 @@ export default function DashboardScreen({ navigation }) {
   const [logMealModalVisible, setLogMealModalVisible] = useState(false);
   const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
   const [insightsModalVisible, setInsightsModalVisible] = useState(false);
+  const [communityModalVisible, setCommunityModalVisible] = useState(false);
 
   // Modal input states
   const [glucoseValue, setGlucoseValue] = useState('');
@@ -322,7 +323,7 @@ export default function DashboardScreen({ navigation }) {
 
           {/* Log Meal */}
           <Pressable
-            onPress={() => setLogMealModalVisible(true)}
+            onPress={() => navigation.navigate('LogMeal')}
             style={({ pressed }) => [
               styles.quickActionButton,
               pressed && styles.quickActionPressed
@@ -339,7 +340,7 @@ export default function DashboardScreen({ navigation }) {
 
           {/* Exercise */}
           <Pressable
-            onPress={() => setExerciseModalVisible(true)}
+            onPress={() => navigation.navigate('LogExercise')}
             style={({ pressed }) => [
               styles.quickActionButton,
               pressed && styles.quickActionPressed
@@ -354,26 +355,26 @@ export default function DashboardScreen({ navigation }) {
             </LinearGradient>
           </Pressable>
 
-          {/* FlowSense AI */}
+          {/* Care Circle */}
           <Pressable
-            onPress={() => setInsightsModalVisible(true)}
+            onPress={() => setCommunityModalVisible(true)}
             style={({ pressed }) => [
               styles.quickActionButton,
               pressed && styles.quickActionPressed
             ]}
           >
             <LinearGradient
-              colors={['#10B981', '#059669']}
+              colors={['#EC4899', '#DB2777']}
               style={styles.quickActionGradient}
             >
-              <Text style={styles.quickActionIcon}>💡</Text>
-              <Text style={styles.quickActionLabel}>FlowSense AI</Text>
+              <Text style={styles.quickActionIcon}>🫂</Text>
+              <Text style={styles.quickActionLabel}>Care Circle</Text>
             </LinearGradient>
           </Pressable>
         </View>
 
-        {/* 6. TODAY'S INSIGHT CARD */}
-        <View style={styles.insightCard}>
+        {/* 6. TODAY'S INSIGHT CARD - HIDDEN FOR COMPACT VIEW */}
+        {/* <View style={styles.insightCard}>
           <Text style={styles.insightIcon}>💡</Text>
           <View style={styles.insightContent}>
             <Text style={styles.insightTitle}>Today's Insight</Text>
@@ -387,10 +388,10 @@ export default function DashboardScreen({ navigation }) {
           >
             <Text style={styles.refreshIcon}>🔄</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
 
-        {/* 7. AURORA ASSISTANT TEASER */}
-        <View style={styles.auroraCard}>
+        {/* 7. AURORA ASSISTANT TEASER - HIDDEN FOR COMPACT VIEW */}
+        {/* <View style={styles.auroraCard}>
           <View style={styles.auroraHeader}>
             <Text style={styles.auroraIcon}>🤖</Text>
             <View style={styles.comingSoonBadge}>
@@ -401,7 +402,7 @@ export default function DashboardScreen({ navigation }) {
           <Text style={styles.auroraSubtitle}>
             Ask me anything about managing diabetes
           </Text>
-        </View>
+        </View> */}
 
         {/* Bottom padding */}
         <View style={styles.bottomPadding} />
@@ -629,6 +630,171 @@ export default function DashboardScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      {/* CARE CIRCLE COMMUNITY MODAL */}
+      <Modal
+        isVisible={communityModalVisible}
+        onBackdropPress={() => setCommunityModalVisible(false)}
+        onSwipeComplete={() => setCommunityModalVisible(false)}
+        swipeDirection="down"
+        style={styles.modal}
+      >
+        <View style={styles.modalContent}>
+          <View style={styles.modalHandle} />
+
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <Text style={styles.modalTitle}>🫂 Care Circle Community</Text>
+
+            <View style={styles.communityIntro}>
+              <Text style={styles.communityIntroText}>
+                Welcome to your supportive diabetes community! This is a safe space where
+                people with diabetes share experiences, celebrate milestones, ask questions,
+                and support each other.
+              </Text>
+            </View>
+
+            <View style={styles.communityStats}>
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>12.5K</Text>
+                <Text style={styles.statLabel}>Members</Text>
+              </View>
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>1.2K</Text>
+                <Text style={styles.statLabel}>Online</Text>
+              </View>
+              <View style={styles.statBox}>
+                <Text style={styles.statNumber}>8.9K</Text>
+                <Text style={styles.statLabel}>Support given</Text>
+              </View>
+            </View>
+
+            <Text style={styles.sectionHeader}>Community Topics</Text>
+
+            <View style={styles.topicsGrid}>
+              <TouchableOpacity style={[styles.topicButton, { backgroundColor: '#FEF3C7' }]}>
+                <Text style={styles.topicIcon}>🏆</Text>
+                <Text style={styles.topicText}>Milestones</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.topicButton, { backgroundColor: '#D1FAE5' }]}>
+                <Text style={styles.topicIcon}>💪</Text>
+                <Text style={styles.topicText}>Exercise</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.topicButton, { backgroundColor: '#DBEAFE' }]}>
+                <Text style={styles.topicIcon}>🍽️</Text>
+                <Text style={styles.topicText}>Nutrition</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.topicButton, { backgroundColor: '#FCE7F3' }]}>
+                <Text style={styles.topicIcon}>💗</Text>
+                <Text style={styles.topicText}>Support</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.topicButton, { backgroundColor: '#E0E7FF' }]}>
+                <Text style={styles.topicIcon}>💡</Text>
+                <Text style={styles.topicText}>Tips & Tricks</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.topicButton, { backgroundColor: '#FED7AA' }]}>
+                <Text style={styles.topicIcon}>❓</Text>
+                <Text style={styles.topicText}>Q&A</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.sectionHeader}>Recent Posts</Text>
+
+            <View style={styles.postCard}>
+              <View style={styles.postHeader}>
+                <View style={styles.postAvatar}>
+                  <Text style={styles.postAvatarText}>SM</Text>
+                </View>
+                <View style={styles.postInfo}>
+                  <Text style={styles.postAuthor}>Sarah M.</Text>
+                  <Text style={styles.postTime}>2h ago</Text>
+                </View>
+                <View style={styles.postBadge}>
+                  <Text style={styles.postBadgeText}>⭐ 30-Day Streak</Text>
+                </View>
+              </View>
+              <Text style={styles.postContent}>
+                Just hit my 30-day streak! My pet is so happy and I feel amazing.
+                This app has changed my life! 🎉
+              </Text>
+              <View style={styles.postStats}>
+                <Text style={styles.postStat}>❤️ 12</Text>
+                <Text style={styles.postStat}>💬 3</Text>
+              </View>
+            </View>
+
+            <View style={styles.postCard}>
+              <View style={styles.postHeader}>
+                <View style={styles.postAvatar}>
+                  <Text style={styles.postAvatarText}>AR</Text>
+                </View>
+                <View style={styles.postInfo}>
+                  <Text style={styles.postAuthor}>Alex R.</Text>
+                  <Text style={styles.postTime}>4h ago</Text>
+                </View>
+                <View style={styles.postBadge}>
+                  <Text style={styles.postBadgeText}>⚡ Level 15</Text>
+                </View>
+              </View>
+              <Text style={styles.postContent}>
+                Reached Level 15 today! The gamification really keeps me motivated
+                to log everything consistently.
+              </Text>
+              <View style={styles.postStats}>
+                <Text style={styles.postStat}>❤️ 8</Text>
+                <Text style={styles.postStat}>💬 5</Text>
+              </View>
+            </View>
+
+            <View style={styles.postCard}>
+              <View style={styles.postHeader}>
+                <View style={styles.postAvatar}>
+                  <Text style={styles.postAvatarText}>MG</Text>
+                </View>
+                <View style={styles.postInfo}>
+                  <Text style={styles.postAuthor}>Maria G.</Text>
+                  <Text style={styles.postTime}>1d ago</Text>
+                </View>
+                <View style={styles.postBadge}>
+                  <Text style={styles.postBadgeText}>🎯 Time in Range Master</Text>
+                </View>
+              </View>
+              <Text style={styles.postContent}>
+                First week with 90%+ time in range! FlowSense AI predictions helped
+                me adjust my meal timing perfectly.
+              </Text>
+              <View style={styles.postStats}>
+                <Text style={styles.postStat}>❤️ 15</Text>
+                <Text style={styles.postStat}>💬 7</Text>
+              </View>
+            </View>
+
+            <View style={styles.comingSoonBox}>
+              <Text style={styles.comingSoonTitle}>🚀 Coming Soon</Text>
+              <Text style={styles.comingSoonText}>
+                • Post your own updates{'\n'}
+                • Comment on posts{'\n'}
+                • Join topic-specific discussions{'\n'}
+                • Connect with mentors{'\n'}
+                • Private messaging
+              </Text>
+            </View>
+
+            <View style={{ height: 20 }} />
+          </ScrollView>
+
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={() => setCommunityModalVisible(false)}
+          >
+            <Text style={styles.saveButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -647,10 +813,10 @@ const styles = StyleSheet.create({
 
   // 1. HEADER STYLES
   header: {
-    height: 100,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 12,
+    height: 85,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 10,
   },
   headerContent: {
     flexDirection: 'row',
@@ -696,12 +862,13 @@ const styles = StyleSheet.create({
   greetingCard: {
     backgroundColor: '#F3E8FF',
     marginHorizontal: 16,
-    marginTop: 20,
-    padding: 24,
-    borderRadius: 16,
+    marginTop: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
   },
   greetingText: {
-    fontSize: 28,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#7C3AED',
     textAlign: 'center',
@@ -710,9 +877,9 @@ const styles = StyleSheet.create({
   // 3. RECENT GLUCOSE CARD STYLES
   glucoseCard: {
     marginHorizontal: 16,
-    marginTop: 16,
-    padding: 20,
-    borderRadius: 16,
+    marginTop: 8,
+    padding: 12,
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -720,27 +887,28 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   glucoseCardTitle: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '600',
     color: '#6B7280',
-    marginBottom: 12,
+    marginBottom: 4,
   },
   glucoseCardValue: {
-    fontSize: 48,
+    fontSize: 36,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   glucoseCardUnit: {
-    fontSize: 24,
+    fontSize: 14,
     fontWeight: '600',
   },
   glucoseTimestamp: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
-    marginBottom: 8,
+    marginTop: 4,
+    marginBottom: 4,
   },
   glucoseStatus: {
-    fontSize: 18,
+    fontSize: 13,
     fontWeight: '600',
   },
 
@@ -749,13 +917,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginHorizontal: 16,
-    marginTop: 16,
-    gap: 12,
+    marginTop: 8,
+    gap: 8,
   },
   statCard: {
     flex: 1,
     backgroundColor: '#FFF',
-    padding: 16,
+    padding: 10,
     borderRadius: 12,
     alignItems: 'center',
     shadowColor: '#000',
@@ -765,19 +933,19 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginTop: 8,
+    marginTop: 6,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 9,
     color: '#6B7280',
-    marginTop: 4,
+    marginTop: 2,
     textAlign: 'center',
   },
   statSubLabel: {
-    fontSize: 12,
+    fontSize: 9,
     color: '#6B7280',
     textAlign: 'center',
   },
@@ -785,22 +953,23 @@ const styles = StyleSheet.create({
   // 5. QUICK ACTIONS STYLES
   quickActionsContainer: {
     marginHorizontal: 16,
-    marginTop: 20,
+    marginTop: 12,
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: 8,
   },
   quickActionButton: {
     width: '48%',
-    aspectRatio: 1,
-    borderRadius: 20,
+    aspectRatio: 1.3,
+    borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 16,
+    marginBottom: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   quickActionPressed: {
     transform: [{ scale: 0.95 }],
@@ -809,14 +978,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: 12,
   },
   quickActionIcon: {
-    fontSize: 40,
-    marginBottom: 8,
+    fontSize: 32,
+    marginBottom: 6,
   },
   quickActionLabel: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: 'bold',
     color: '#FFF',
     textAlign: 'center',
@@ -826,37 +995,43 @@ const styles = StyleSheet.create({
   insightCard: {
     backgroundColor: '#DBEAFE',
     marginHorizontal: 16,
-    marginTop: 16,
-    padding: 16,
+    marginTop: 12,
+    padding: 14,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
   },
   insightIcon: {
-    fontSize: 28,
-    marginRight: 12,
+    fontSize: 24,
+    marginRight: 10,
   },
   insightContent: {
     flex: 1,
   },
   insightTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 4,
   },
   insightText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#4B5563',
-    lineHeight: 20,
+    lineHeight: 18,
+  },
+  refreshButton: {
+    padding: 8,
+  },
+  refreshIcon: {
+    fontSize: 20,
   },
 
   // 7. AURORA ASSISTANT STYLES
   auroraCard: {
     backgroundColor: '#F3E8FF',
     marginHorizontal: 16,
-    marginTop: 16,
-    padding: 16,
+    marginTop: 12,
+    padding: 14,
     borderRadius: 12,
   },
   auroraHeader: {
@@ -866,29 +1041,29 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   auroraIcon: {
-    fontSize: 32,
+    fontSize: 28,
   },
   comingSoonBadge: {
     backgroundColor: '#8B5CF6',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 10,
   },
   comingSoonText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#FFF',
   },
   auroraTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#7C3AED',
     marginBottom: 4,
   },
   auroraSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#8B5CF6',
-    lineHeight: 20,
+    lineHeight: 18,
   },
 
   // BOTTOM PADDING
@@ -1017,5 +1192,147 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 24,
     textAlign: 'center',
+  },
+
+  // COMMUNITY MODAL STYLES
+  communityIntro: {
+    backgroundColor: '#EEF2FF',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  communityIntroText: {
+    fontSize: 14,
+    color: '#4338CA',
+    lineHeight: 20,
+  },
+  communityStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statBox: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  topicsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20,
+  },
+  topicButton: {
+    width: '48%',
+    padding: 16,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  topicIcon: {
+    fontSize: 24,
+  },
+  topicText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  postCard: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  postHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  postAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#8B5CF6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  postAvatarText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  postInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  postAuthor: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  postTime: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  postBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  postBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#92400E',
+  },
+  postContent: {
+    fontSize: 14,
+    color: '#1F2937',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  postStats: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  postStat: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  comingSoonBox: {
+    backgroundColor: '#F3F4F6',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  comingSoonTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 8,
   },
 });

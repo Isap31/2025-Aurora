@@ -10,9 +10,12 @@ import LoginScreen from './src/screens/auth/LoginScreen';
 import SignupScreen from './src/screens/auth/SignupScreen';
 import DashboardScreen from './src/screens/dashboard/DashboardScreen';
 import LogGlucoseScreen from './src/screens/glucose/LogGlucoseScreen';
-import HistoryScreen from './src/screens/glucose/HistoryScreen';
-import GraphScreen from './src/screens/glucose/GraphScreen';
+import HistoryScreen from './src/screens/HistoryScreen';
+import GraphScreen from './src/screens/GraphScreen';
+import HealthQuestScreen from './src/screens/HealthQuestScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import LogMealScreen from './src/screens/LogMealScreen';
+import LogExerciseScreen from './src/screens/LogExerciseScreen';
 
 // Import auth service
 import authService from './src/services/authService';
@@ -32,7 +35,7 @@ function MainTabs() {
           else if (route.name === 'Log') iconName = 'add-circle';
           else if (route.name === 'History') iconName = 'list';
           else if (route.name === 'Graph') iconName = 'bar-chart';
-          else if (route.name === 'Profile') iconName = 'person';
+          else if (route.name === 'Goals') iconName = 'trophy';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#7B2CBF',
@@ -43,7 +46,7 @@ function MainTabs() {
       <Tab.Screen name="Log" component={LogGlucoseScreen} />
       <Tab.Screen name="History" component={HistoryScreen} />
       <Tab.Screen name="Graph" component={GraphScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Goals" component={HealthQuestScreen} />
     </Tab.Navigator>
   );
 }
@@ -85,7 +88,33 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
-          <Stack.Screen name="MainTabs" component={MainTabs} />
+          <>
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen
+              name="Profile"
+              component={ProfileScreen}
+              options={{
+                headerShown: false,
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen
+              name="LogMeal"
+              component={LogMealScreen}
+              options={{
+                headerShown: false,
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen
+              name="LogExercise"
+              component={LogExerciseScreen}
+              options={{
+                headerShown: false,
+                presentation: 'card',
+              }}
+            />
+          </>
         ) : (
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
