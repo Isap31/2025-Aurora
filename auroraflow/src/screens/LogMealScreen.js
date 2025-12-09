@@ -8,7 +8,6 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
-  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,10 +17,8 @@ export default function LogMealScreen({ navigation }) {
   const [carbs, setCarbs] = useState('');
   const [calories, setCalories] = useState('');
   const [notes, setNotes] = useState('');
-  const [mealType, setMealType] = useState(''); // breakfast, lunch, dinner, snack
-  const [searchQuery, setSearchQuery] = useState('');
+  const [mealType, setMealType] = useState('');
 
-  // Common foods with carb counts
   const commonFoods = [
     { name: 'Banana (medium)', carbs: 27, calories: 105, icon: '🍌' },
     { name: 'Apple (medium)', carbs: 25, calories: 95, icon: '🍎' },
@@ -48,9 +45,8 @@ export default function LogMealScreen({ navigation }) {
     const carbCount = parseInt(carbs) || 0;
     if (carbCount === 0) return null;
 
-    // Simple estimation: 1g carb raises glucose ~3-4 mg/dL
     const estimatedRise = carbCount * 3.5;
-    const currentGlucose = 142; // From latest reading
+    const currentGlucose = 142;
     const predicted = Math.round(currentGlucose + estimatedRise);
 
     return {
@@ -105,7 +101,6 @@ export default function LogMealScreen({ navigation }) {
       </LinearGradient>
 
       <ScrollView style={styles.scrollView}>
-        {/* Meal Type Selector */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Meal Type</Text>
           <View style={styles.mealTypeGrid}>
@@ -129,7 +124,6 @@ export default function LogMealScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Quick Add Common Foods */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Add</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -149,7 +143,6 @@ export default function LogMealScreen({ navigation }) {
           </ScrollView>
         </View>
 
-        {/* Manual Entry */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Meal Details</Text>
 
@@ -199,7 +192,6 @@ export default function LogMealScreen({ navigation }) {
           </View>
         </View>
 
-        {/* AI Carb Estimator Helper */}
         <View style={styles.aiHelper}>
           <View style={styles.aiHelperHeader}>
             <Ionicons name="bulb" size={20} color="#F59E0B" />
@@ -210,7 +202,6 @@ export default function LogMealScreen({ navigation }) {
           </Text>
         </View>
 
-        {/* Glucose Impact Prediction */}
         {impact && (
           <View style={[styles.predictionCard, { borderLeftColor: impact.inRange ? '#10B981' : '#F59E0B' }]}>
             <Text style={styles.predictionTitle}>📊 Predicted Glucose Impact</Text>
@@ -235,7 +226,6 @@ export default function LogMealScreen({ navigation }) {
           </View>
         )}
 
-        {/* Photo Upload (Coming Soon) */}
         <View style={styles.photoSection}>
           <TouchableOpacity style={styles.photoButton}>
             <Ionicons name="camera" size={32} color="#6B7280" />
@@ -247,7 +237,6 @@ export default function LogMealScreen({ navigation }) {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* Bottom Actions */}
       <View style={styles.bottomActions}>
         <TouchableOpacity
           style={styles.cancelButton}

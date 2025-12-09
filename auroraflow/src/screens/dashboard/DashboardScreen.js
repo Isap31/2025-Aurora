@@ -355,20 +355,20 @@ export default function DashboardScreen({ navigation }) {
             </LinearGradient>
           </Pressable>
 
-          {/* Care Circle */}
+          {/* Ask Aurora */}
           <Pressable
-            onPress={() => setCommunityModalVisible(true)}
+            onPress={() => navigation.navigate('Aurora')}
             style={({ pressed }) => [
               styles.quickActionButton,
               pressed && styles.quickActionPressed
             ]}
           >
             <LinearGradient
-              colors={['#EC4899', '#DB2777']}
+              colors={['#8B5CF6', '#7C3AED']}
               style={styles.quickActionGradient}
             >
-              <Text style={styles.quickActionIcon}>🫂</Text>
-              <Text style={styles.quickActionLabel}>Care Circle</Text>
+              <Text style={styles.quickActionIcon}>🤖</Text>
+              <Text style={styles.quickActionLabel}>Ask Aurora</Text>
             </LinearGradient>
           </Pressable>
         </View>

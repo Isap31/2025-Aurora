@@ -10,12 +10,14 @@ import LoginScreen from './src/screens/auth/LoginScreen';
 import SignupScreen from './src/screens/auth/SignupScreen';
 import DashboardScreen from './src/screens/dashboard/DashboardScreen';
 import LogGlucoseScreen from './src/screens/glucose/LogGlucoseScreen';
+import QuickLogScreen from './src/screens/QuickLogScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import GraphScreen from './src/screens/GraphScreen';
 import HealthQuestScreen from './src/screens/HealthQuestScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import LogMealScreen from './src/screens/LogMealScreen';
 import LogExerciseScreen from './src/screens/LogExerciseScreen';
+import AuroraScreen from './src/screens/AuroraScreen';
 
 // Import auth service
 import authService from './src/services/authService';
@@ -43,7 +45,7 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Log" component={LogGlucoseScreen} />
+      <Tab.Screen name="Log" component={QuickLogScreen} />
       <Tab.Screen name="History" component={HistoryScreen} />
       <Tab.Screen name="Graph" component={GraphScreen} />
       <Tab.Screen name="Goals" component={HealthQuestScreen} />
@@ -109,6 +111,14 @@ export default function App() {
             <Stack.Screen
               name="LogExercise"
               component={LogExerciseScreen}
+              options={{
+                headerShown: false,
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen
+              name="Aurora"
+              component={AuroraScreen}
               options={{
                 headerShown: false,
                 presentation: 'card',

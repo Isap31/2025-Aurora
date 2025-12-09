@@ -46,8 +46,6 @@ export default function LogExerciseScreen({ navigation }) {
 
     const baseCalories = selectedActivity.caloriesPerMin * durationMin;
     const adjustedCalories = Math.round(baseCalories * selectedIntensity.multiplier);
-
-    // Exercise typically lowers glucose by ~1-2 mg/dL per 100 calories burned
     const glucoseReduction = Math.round((adjustedCalories / 100) * 1.5);
     const currentGlucose = 142;
     const predicted = Math.max(70, currentGlucose - glucoseReduction);
@@ -69,7 +67,7 @@ export default function LogExerciseScreen({ navigation }) {
     const impact = calculateImpact();
 
     try {
-      const response = await fetch('http://localhost:3000/api/exercise', {
+      const response = await fetch('http://localhost:3000/api/exercises', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -92,7 +90,6 @@ export default function LogExerciseScreen({ navigation }) {
     }
   };
 
-  const selectedActivity = activityTypes.find(a => a.id === activityType);
   const impact = calculateImpact();
 
   return (
@@ -108,7 +105,6 @@ export default function LogExerciseScreen({ navigation }) {
       </LinearGradient>
 
       <ScrollView style={styles.scrollView}>
-        {/* Activity Type */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Activity Type</Text>
           <View style={styles.activityGrid}>
@@ -132,7 +128,6 @@ export default function LogExerciseScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Duration */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Duration</Text>
           <View style={styles.durationContainer}>
@@ -147,7 +142,6 @@ export default function LogExerciseScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Intensity */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Intensity Level</Text>
           <View style={styles.intensityRow}>
@@ -172,7 +166,6 @@ export default function LogExerciseScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Impact Prediction */}
         {impact && (
           <View style={styles.impactCard}>
             <Text style={styles.impactTitle}>💪 Exercise Impact</Text>
@@ -208,7 +201,6 @@ export default function LogExerciseScreen({ navigation }) {
           </View>
         )}
 
-        {/* Exercise Tips */}
         <View style={styles.tipsCard}>
           <View style={styles.tipsHeader}>
             <Ionicons name="bulb" size={20} color="#3B82F6" />
@@ -223,7 +215,6 @@ export default function LogExerciseScreen({ navigation }) {
           </Text>
         </View>
 
-        {/* Notes */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Notes (optional)</Text>
           <TextInput
@@ -239,7 +230,6 @@ export default function LogExerciseScreen({ navigation }) {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* Bottom Actions */}
       <View style={styles.bottomActions}>
         <TouchableOpacity
           style={styles.cancelButton}
