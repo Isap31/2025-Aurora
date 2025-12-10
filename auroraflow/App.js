@@ -18,6 +18,7 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import LogMealScreen from './src/screens/LogMealScreen';
 import LogExerciseScreen from './src/screens/LogExerciseScreen';
 import AuroraScreen from './src/screens/AuroraScreen';
+import CommunityScreen from './src/screens/CommunityScreen';
 
 // Import auth service
 import authService from './src/services/authService';
@@ -34,18 +35,18 @@ function MainTabs() {
         tabBarIcon: ({ color, size }) => {
           let iconName;
           if (route.name === 'Dashboard') iconName = 'home';
-          else if (route.name === 'Log') iconName = 'add-circle';
+          else if (route.name === 'Care Circle') iconName = 'people';
           else if (route.name === 'History') iconName = 'list';
           else if (route.name === 'Graph') iconName = 'bar-chart';
           else if (route.name === 'Goals') iconName = 'trophy';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#7B2CBF',
+        tabBarActiveTintColor: '#EC4899',
         tabBarInactiveTintColor: 'gray',
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Log" component={QuickLogScreen} />
+      <Tab.Screen name="Care Circle" component={CommunityScreen} />
       <Tab.Screen name="History" component={HistoryScreen} />
       <Tab.Screen name="Graph" component={GraphScreen} />
       <Tab.Screen name="Goals" component={HealthQuestScreen} />

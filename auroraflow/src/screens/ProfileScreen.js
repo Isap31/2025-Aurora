@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen({ navigation }) {
   const handleLogout = () => {
@@ -38,6 +39,13 @@ export default function ProfileScreen({ navigation }) {
           colors={['#8B5CF6', '#3B82F6']}
           style={styles.header}
         >
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={28} color="white" />
+          </TouchableOpacity>
+
           <View style={styles.profilePicture}>
             <Text style={styles.profileInitials}>BT</Text>
           </View>
@@ -255,6 +263,18 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 40,
     alignItems: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
   profilePicture: {
     width: 100,
