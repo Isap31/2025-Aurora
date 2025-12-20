@@ -15,6 +15,7 @@ import {
   Divider,
 } from 'react-native-paper';
 import { colors, spacing, typography } from '../../constants/theme';
+import authService from '../../services/auth/authService';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -72,6 +73,23 @@ export default function LoginScreen({ navigation }) {
       setErrors({ general: 'Login failed. Please try again.' });
       AccessibilityInfo.announceForAccessibility(
         'Login failed. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle guest mode
+  const handleGuestMode = async () => {
+    setLoading(true);
+    try {
+      await authService.setGuestMode();
+      AccessibilityInfo.announceForAccessibility('Continuing as guest');
+      // Navigation will be handled by auth state check
+    } catch (error) {
+      setErrors({ general: 'Failed to enter guest mode. Please try again.' });
+      AccessibilityInfo.announceForAccessibility(
+        'Failed to enter guest mode. Please try again.'
       );
     } finally {
       setLoading(false);
@@ -213,6 +231,25 @@ export default function LoginScreen({ navigation }) {
             Create Account
           </Button>
         </View>
+
+        {/* Guest Mode Button */}
+        <View style={styles.guestContainer}>
+          <Button
+            mode="text"
+            onPress={handleGuestMode}
+            loading={loading}
+            disabled={loading}
+            style={styles.guestButton}
+            contentStyle={styles.buttonContent}
+            accessibilityLabel="Continue as guest button"
+            accessibilityHint="Double tap to try the app without creating an account"
+          >
+            Continue as Guest
+          </Button>
+          <Text variant="bodySmall" style={styles.guestHint}>
+            Your data won't be saved to cloud
+          </Text>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -282,5 +319,16 @@ const styles = StyleSheet.create({
   },
   signupButton: {
     width: '100%',
+  },
+  guestContainer: {
+    alignItems: 'center',
+    marginTop: spacing.lg,
+  },
+  guestButton: {
+    marginBottom: spacing.xs,
+  },
+  guestHint: {
+    color: colors.textSecondary,
+    fontStyle: 'italic',
   },
 });

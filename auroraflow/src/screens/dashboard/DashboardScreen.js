@@ -14,6 +14,9 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import Modal from 'react-native-modal';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { spacing, accessibility } from '../../constants/theme';
+import authService from '../../services/authService';
 
 const DAILY_AFFIRMATIONS = [
   "Great job staying in range today! 🎉",
@@ -44,6 +47,7 @@ const getRandomAffirmation = () => {
 };
 
 export default function DashboardScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [userName] = useState('Bridget'); // Mock user name
 
   // Real data from API
@@ -53,6 +57,8 @@ export default function DashboardScreen({ navigation }) {
   const [totalLogs, setTotalLogs] = useState(42);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
+  const [guestBannerDismissed, setGuestBannerDismissed] = useState(false);
 
   // Modal visibility states
   const [logGlucoseModalVisible, setLogGlucoseModalVisible] = useState(false);
@@ -68,11 +74,17 @@ export default function DashboardScreen({ navigation }) {
   // Daily affirmation state
   const [dailyAffirmation, setDailyAffirmation] = useState('');
 
-  // Set random affirmation on mount
+  // Set random affirmation on mount and check guest mode
   useEffect(() => {
     setDailyAffirmation(getRandomAffirmation());
     loadDashboard();
+    checkGuestMode();
   }, []);
+
+  const checkGuestMode = async () => {
+    const guestMode = await authService.isGuestMode();
+    setIsGuest(guestMode);
+  };
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -150,43 +162,66 @@ export default function DashboardScreen({ navigation }) {
     return 'Very high! 🚨';
   };
 
+  // Real-time glucose status functions
+  const getGlucoseStatusColor = (value) => {
+    if (isNaN(value)) return { bg: '#F3F4F6', border: '#E5E7EB', text: '#6B7280' };
+    if (value < 70) return { bg: '#FEE2E2', border: '#EF4444', text: '#991B1B' };
+    if (value > 180) return { bg: '#FEF3C7', border: '#F59E0B', text: '#92400E' };
+    return { bg: '#D1FAE5', border: '#10B981', text: '#065F46' };
+  };
+
+  const getGlucoseStatusIcon = (value) => {
+    if (isNaN(value)) return 'help-circle';
+    if (value < 70) return 'alert-circle';
+    if (value > 180) return 'warning';
+    return 'checkmark-circle';
+  };
+
+  const getGlucoseStatusText = (value) => {
+    if (isNaN(value)) return 'Enter glucose value';
+    if (value < 70) return '⚠️ Low Blood Sugar';
+    if (value > 180) return '⚠️ High Blood Sugar';
+    return '✅ In Target Range';
+  };
+
+  const getGlucoseStatusAdvice = (value) => {
+    if (isNaN(value)) return 'Target: 70-180 mg/dL';
+    if (value < 54) return 'Very low - treat immediately with fast-acting carbs!';
+    if (value < 70) return 'Treat with 15g fast-acting carbs and recheck in 15 min';
+    if (value > 250) return 'Very high - check ketones and contact your doctor';
+    if (value > 180) return 'High - review recent meals and activity';
+    return 'Great! Your glucose is in the healthy range';
+  };
+
   const saveGlucoseReading = async () => {
     if (!glucoseValue) {
-      Alert.alert('Error', 'Please enter a glucose reading');
+      Alert.alert('Required', 'Please enter a glucose value');
       return;
     }
 
     const parsedValue = parseInt(glucoseValue);
-    if (parsedValue < 20 || parsedValue > 600) {
-      Alert.alert('Error', 'Please enter a valid value (20-600 mg/dL)');
+    if (isNaN(parsedValue) || parsedValue < 20 || parsedValue > 600) {
+      Alert.alert('Invalid Value', 'Please enter a valid glucose reading (20-600 mg/dL)');
       return;
     }
 
-    try {
-      const response = await fetch('http://localhost:3000/api/glucose', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          value: parsedValue,
-          notes: glucoseNotes,
-          timestamp: new Date().toISOString(),
-        }),
-      });
+    // Save locally (no backend needed)
+    const newReading = {
+      glucose_value: parsedValue,
+      timestamp: new Date().toISOString(),
+      notes: glucoseNotes || null,
+    };
 
-      if (response.ok) {
-        Alert.alert('Success! ✅', 'Glucose reading saved');
-        setGlucoseValue('');
-        setGlucoseNotes('');
-        setLogGlucoseModalVisible(false);
-        await loadDashboard();
-      } else {
-        const errorData = await response.json();
-        Alert.alert('Error', errorData.error || 'Failed to save reading');
-      }
-    } catch (error) {
-      console.error('Save error:', error);
-      Alert.alert('Error', 'Failed to save reading');
-    }
+    // Update latest glucose immediately
+    setLatestGlucose(newReading);
+
+    // Clear form and close modal
+    setGlucoseValue('');
+    setGlucoseNotes('');
+    setLogGlucoseModalVisible(false);
+
+    // Show success message
+    Alert.alert('Success! 🎉', `Glucose reading saved: ${parsedValue} mg/dL\n+10 XP earned!`);
   };
 
   const getGlucoseColor = (value) => {
@@ -238,7 +273,7 @@ export default function DashboardScreen({ navigation }) {
           colors={['#8B5CF6', '#3B82F6']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.header}
+          style={[styles.header, { paddingTop: 10 + insets.top }]}
         >
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
@@ -265,6 +300,33 @@ export default function DashboardScreen({ navigation }) {
             {greeting.text}, {userName}! {greeting.emoji}
           </Text>
         </View>
+
+        {/* 2.5 GUEST MODE BANNER */}
+        {isGuest && !guestBannerDismissed && (
+          <View style={styles.guestBanner}>
+            <View style={styles.guestBannerContent}>
+              <Ionicons name="information-circle" size={24} color="#8B5CF6" style={styles.guestBannerIcon} />
+              <View style={styles.guestBannerText}>
+                <Text style={styles.guestBannerTitle}>You're in Guest Mode</Text>
+                <Text style={styles.guestBannerSubtitle}>
+                  Your data is stored locally only. Create an account to save your progress to the cloud!
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setGuestBannerDismissed(true)}
+                style={styles.guestBannerClose}
+              >
+                <Ionicons name="close" size={20} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={styles.guestBannerButton}
+              onPress={() => navigation.navigate('Signup')}
+            >
+              <Text style={styles.guestBannerButtonText}>Create Account</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* 3. RECENT GLUCOSE CARD */}
         <View style={[styles.glucoseCard, { backgroundColor: glucoseColor.bg }]}>
@@ -420,19 +482,44 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.modalHandle} />
           <Text style={styles.modalTitle}>Log Glucose</Text>
 
-          <TextInput
-            style={styles.modalInput}
-            placeholder="Enter glucose reading (mg/dL)"
-            keyboardType="numeric"
-            placeholderTextColor="#9CA3AF"
-            value={glucoseValue}
-            onChangeText={setGlucoseValue}
-          />
+          {/* Glucose Input with inline unit */}
+          <View style={styles.glucoseInputContainer}>
+            <TextInput
+              style={styles.glucoseInput}
+              placeholder="Enter reading"
+              keyboardType="numeric"
+              placeholderTextColor="#9CA3AF"
+              value={glucoseValue}
+              onChangeText={setGlucoseValue}
+            />
+            <Text style={styles.unitLabel}>mg/dL</Text>
+          </View>
 
-          <Text style={styles.modalLabel}>Time</Text>
-          <Text style={styles.modalTimeValue}>
-            {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-          </Text>
+          {/* Real-time Status Indicator */}
+          {glucoseValue ? (
+            <View style={[styles.statusIndicator, { backgroundColor: getGlucoseStatusColor(parseFloat(glucoseValue)).bg, borderColor: getGlucoseStatusColor(parseFloat(glucoseValue)).border }]}>
+              <Text style={styles.statusIcon}>{getGlucoseStatusIcon(parseFloat(glucoseValue))}</Text>
+              <View style={styles.statusTextContainer}>
+                <Text style={[styles.statusText, { color: getGlucoseStatusColor(parseFloat(glucoseValue)).text }]}>
+                  {getGlucoseStatusText(parseFloat(glucoseValue))}
+                </Text>
+                <Text style={styles.statusAdvice}>
+                  {getGlucoseStatusAdvice(parseFloat(glucoseValue))}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
+          {/* Time Display */}
+          <View style={styles.timeContainer}>
+            <Text style={styles.timeIcon}>🕐</Text>
+            <View>
+              <Text style={styles.modalLabel}>Time</Text>
+              <Text style={styles.modalTimeValue}>
+                {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+              </Text>
+            </View>
+          </View>
 
           <TextInput
             style={[styles.modalInput, styles.notesInput]}
@@ -453,10 +540,18 @@ export default function DashboardScreen({ navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.saveButton}
+              style={[styles.saveButtonWrapper, !glucoseValue && styles.saveButtonDisabled]}
               onPress={saveGlucoseReading}
+              disabled={!glucoseValue}
             >
-              <Text style={styles.saveButtonText}>💾 Save Reading</Text>
+              <LinearGradient
+                colors={glucoseValue ? ['#8B5CF6', '#3B82F6'] : ['#D1D5DB', '#9CA3AF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.saveButton}
+              >
+                <Text style={styles.saveButtonText}>💾 Save Reading</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
@@ -808,14 +903,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: spacing.lg,
   },
 
   // 1. HEADER STYLES
   header: {
-    height: 85,
-    paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingHorizontal: spacing.md,
     paddingBottom: 10,
   },
   headerContent: {
@@ -861,10 +954,10 @@ const styles = StyleSheet.create({
   // 2. GREETING CARD STYLES
   greetingCard: {
     backgroundColor: '#F3E8FF',
-    marginHorizontal: 16,
-    marginTop: 8,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
     borderRadius: 12,
   },
   greetingText: {
@@ -876,9 +969,9 @@ const styles = StyleSheet.create({
 
   // 3. RECENT GLUCOSE CARD STYLES
   glucoseCard: {
-    marginHorizontal: 16,
-    marginTop: 8,
-    padding: 12,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    padding: spacing.md,
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -916,16 +1009,18 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginHorizontal: 16,
-    marginTop: 8,
-    gap: 8,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    gap: spacing.sm,
   },
   statCard: {
     flex: 1,
     backgroundColor: '#FFF',
-    padding: 10,
+    padding: spacing.md,
     borderRadius: 12,
     alignItems: 'center',
+    minHeight: 100,
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -1167,17 +1262,84 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6B7280',
   },
-  saveButton: {
+  saveButtonWrapper: {
     flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  saveButtonDisabled: {
+    opacity: 0.5,
+  },
+  saveButton: {
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#8B5CF6',
     alignItems: 'center',
   },
   saveButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: 'white',
+  },
+  // Glucose Modal - New Styles
+  glucoseInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  glucoseInput: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1F2937',
+    paddingVertical: 16,
+  },
+  unitLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginLeft: 8,
+  },
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    marginBottom: 16,
+  },
+  statusIcon: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  statusTextContainer: {
+    flex: 1,
+  },
+  statusText: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  statusAdvice: {
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 18,
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  timeIcon: {
+    fontSize: 24,
+    marginRight: 12,
   },
   comingSoonText: {
     fontSize: 20,
@@ -1334,5 +1496,54 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 8,
+  },
+
+  // GUEST MODE BANNER STYLES
+  guestBanner: {
+    backgroundColor: '#F3E8FF',
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    padding: spacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
+  },
+  guestBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  guestBannerIcon: {
+    marginRight: 10,
+  },
+  guestBannerText: {
+    flex: 1,
+  },
+  guestBannerTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#7C3AED',
+    marginBottom: 4,
+  },
+  guestBannerSubtitle: {
+    fontSize: 13,
+    color: '#6B21A8',
+    lineHeight: 18,
+  },
+  guestBannerClose: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  guestBannerButton: {
+    backgroundColor: '#8B5CF6',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  guestBannerButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFF',
   },
 });
