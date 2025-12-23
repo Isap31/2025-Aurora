@@ -51,13 +51,16 @@ export const AuthProvider = ({ children }) => {
 
   const continueAsGuest = async () => {
     try {
+      console.log('🟢 AuthContext: Setting guest mode...');
       await authService.setGuestMode();
       const guestUser = await authService.getCurrentUser();
+      console.log('🟢 AuthContext: Guest user retrieved:', guestUser);
       setIsAuthenticated(true);
       setIsGuest(true);
       setUser(guestUser);
+      console.log('✅ AuthContext: Guest mode activated! isAuthenticated=true');
     } catch (error) {
-      console.error('Error setting guest mode:', error);
+      console.error('❌ AuthContext: Error setting guest mode:', error);
       throw error;
     }
   };

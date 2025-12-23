@@ -94,13 +94,22 @@ function MainNavigator() {
 export default function AppNavigator() {
   const { isAuthenticated, loading } = useAuth();
 
+  console.log('🟡 AppNavigator render - isAuthenticated:', isAuthenticated, 'loading:', loading);
+
   // Show loading screen while checking auth status
   if (loading) {
+    console.log('⏳ Showing loading screen...');
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
+  }
+
+  if (isAuthenticated) {
+    console.log('✅ Showing MainNavigator (TABS)');
+  } else {
+    console.log('🔐 Showing AuthNavigator (LOGIN)');
   }
 
   return (

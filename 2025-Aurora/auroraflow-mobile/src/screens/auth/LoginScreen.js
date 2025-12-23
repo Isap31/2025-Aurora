@@ -82,19 +82,24 @@ export default function LoginScreen({ navigation }) {
 
   // Handle guest mode
   const handleGuestMode = async () => {
+    console.log('🔵 Guest button tapped!');
     setLoading(true);
     setErrors({});
     try {
+      console.log('🔵 Calling continueAsGuest()...');
       await continueAsGuest();
+      console.log('✅ continueAsGuest() completed successfully!');
       AccessibilityInfo.announceForAccessibility('Continuing as guest');
       // Navigation will be handled automatically by auth state change
     } catch (error) {
+      console.error('❌ Guest mode error:', error);
       setErrors({ general: 'Failed to enter guest mode. Please try again.' });
       AccessibilityInfo.announceForAccessibility(
         'Failed to enter guest mode. Please try again.'
       );
     } finally {
       setLoading(false);
+      console.log('🔵 Loading state cleared');
     }
   };
 
