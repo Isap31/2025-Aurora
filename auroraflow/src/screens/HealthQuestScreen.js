@@ -7,8 +7,12 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { spacing, accessibility } from '../constants/theme';
+import { Colors } from '../constants/Colors';
 
 export default function HealthQuestScreen() {
+  const insets = useSafeAreaInsets();
   // Sample data - will connect to backend later
   const userLevel = 12;
   const currentXP = 2450;
@@ -17,10 +21,10 @@ export default function HealthQuestScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#8B5CF6', '#3B82F6']} style={styles.header}>
+      <View style={[styles.header, { paddingTop: 20 + insets.top }]}>
         <Text style={styles.headerTitle}>HealthQuest</Text>
         <Text style={styles.headerSubtitle}>Your diabetes management journey</Text>
-      </LinearGradient>
+      </View>
 
       <ScrollView style={styles.scrollView}>
         {/* Level Progress */}
@@ -153,79 +157,91 @@ export default function HealthQuestScreen() {
 
           <View style={styles.achievementsGrid}>
             {/* Streak Master */}
-            <View style={[styles.achievementCard, { borderColor: '#F97316' }]}>
-              <View style={[styles.achievementIcon, { backgroundColor: '#FED7AA' }]}>
-                <Text style={styles.achievementEmoji}>🔥</Text>
+            <View style={styles.achievementCard}>
+              <View style={[styles.achievementCardInner, { borderColor: '#F97316' }]}>
+                <View style={[styles.achievementIcon, { backgroundColor: '#FED7AA' }]}>
+                  <Text style={styles.achievementEmoji}>🔥</Text>
+                </View>
+                <Text style={styles.achievementTitle}>Streak Master</Text>
+                <Text style={styles.achievementDesc}>30-day logging streak</Text>
+                <Text style={styles.achievementProgress}>40/30</Text>
+                <View style={styles.achievementBarContainer}>
+                  <View style={[styles.achievementBar, { width: '100%', backgroundColor: '#F97316' }]} />
+                </View>
+                <Text style={styles.achievementPercent}>133%</Text>
               </View>
-              <Text style={styles.achievementTitle}>Streak Master</Text>
-              <Text style={styles.achievementDesc}>30-day logging streak</Text>
-              <Text style={styles.achievementProgress}>40/30</Text>
-              <View style={styles.achievementBarContainer}>
-                <View style={[styles.achievementBar, { width: '100%', backgroundColor: '#F97316' }]} />
-              </View>
-              <Text style={styles.achievementPercent}>133%</Text>
             </View>
 
             {/* Glucose Guardian */}
-            <View style={[styles.achievementCard, { borderColor: '#8B5CF6' }]}>
-              <View style={[styles.achievementIcon, { backgroundColor: '#E9D5FF' }]}>
-                <Text style={styles.achievementEmoji}>🎯</Text>
+            <View style={styles.achievementCard}>
+              <View style={[styles.achievementCardInner, { borderColor: '#8B5CF6' }]}>
+                <View style={[styles.achievementIcon, { backgroundColor: '#E9D5FF' }]}>
+                  <Text style={styles.achievementEmoji}>🎯</Text>
+                </View>
+                <Text style={styles.achievementTitle}>Glucose Guardian</Text>
+                <Text style={styles.achievementDesc}>90% time in range for a week</Text>
+                <Text style={styles.achievementProgress}>85/90</Text>
+                <View style={styles.achievementBarContainer}>
+                  <View style={[styles.achievementBar, { width: '94%', backgroundColor: '#8B5CF6' }]} />
+                </View>
+                <Text style={styles.achievementPercent}>94%</Text>
               </View>
-              <Text style={styles.achievementTitle}>Glucose Guardian</Text>
-              <Text style={styles.achievementDesc}>90% time in range for a week</Text>
-              <Text style={styles.achievementProgress}>85/90</Text>
-              <View style={styles.achievementBarContainer}>
-                <View style={[styles.achievementBar, { width: '94%', backgroundColor: '#8B5CF6' }]} />
-              </View>
-              <Text style={styles.achievementPercent}>94%</Text>
             </View>
 
             {/* Pet Parent - EARNED */}
-            <View style={[styles.achievementCard, { borderColor: '#FBBF24', backgroundColor: '#FFFBEB' }]}>
-              <View style={[styles.achievementIcon, { backgroundColor: '#FEF3C7' }]}>
-                <Text style={styles.achievementEmoji}>⭐</Text>
+            <View style={styles.achievementCard}>
+              <View style={[styles.achievementCardInner, { borderColor: '#FBBF24', backgroundColor: '#FFFBEB' }]}>
+                <View style={[styles.achievementIcon, { backgroundColor: '#FEF3C7' }]}>
+                  <Text style={styles.achievementEmoji}>⭐</Text>
+                </View>
+                <Text style={styles.achievementTitle}>Pet Parent</Text>
+                <Text style={styles.achievementDesc}>Keep pet happy for 14 days</Text>
+                <Text style={styles.earnedBadge}>⭐ Earned!</Text>
               </View>
-              <Text style={styles.achievementTitle}>Pet Parent</Text>
-              <Text style={styles.achievementDesc}>Keep pet happy for 14 days</Text>
-              <Text style={styles.earnedBadge}>⭐ Earned!</Text>
             </View>
 
             {/* Health Champion */}
-            <View style={[styles.achievementCard, { borderColor: '#F97316' }]}>
-              <View style={[styles.achievementIcon, { backgroundColor: '#FED7AA' }]}>
-                <Text style={styles.achievementEmoji}>👑</Text>
+            <View style={styles.achievementCard}>
+              <View style={[styles.achievementCardInner, { borderColor: '#F97316' }]}>
+                <View style={[styles.achievementIcon, { backgroundColor: '#FED7AA' }]}>
+                  <Text style={styles.achievementEmoji}>👑</Text>
+                </View>
+                <Text style={styles.achievementTitle}>Health Champion</Text>
+                <Text style={styles.achievementDesc}>Reach level 15</Text>
+                <Text style={styles.achievementProgress}>80/15</Text>
+                <View style={styles.achievementBarContainer}>
+                  <View style={[styles.achievementBar, { width: '100%', backgroundColor: '#F97316' }]} />
+                </View>
+                <Text style={styles.achievementPercent}>533%</Text>
               </View>
-              <Text style={styles.achievementTitle}>Health Champion</Text>
-              <Text style={styles.achievementDesc}>Reach level 15</Text>
-              <Text style={styles.achievementProgress}>80/15</Text>
-              <View style={styles.achievementBarContainer}>
-                <View style={[styles.achievementBar, { width: '100%', backgroundColor: '#F97316' }]} />
-              </View>
-              <Text style={styles.achievementPercent}>533%</Text>
             </View>
 
             {/* Consistency King */}
-            <View style={[styles.achievementCard, { borderColor: '#3B82F6' }]}>
-              <View style={[styles.achievementIcon, { backgroundColor: '#DBEAFE' }]}>
-                <Text style={styles.achievementEmoji}>🛡️</Text>
+            <View style={styles.achievementCard}>
+              <View style={[styles.achievementCardInner, { borderColor: '#3B82F6' }]}>
+                <View style={[styles.achievementIcon, { backgroundColor: '#DBEAFE' }]}>
+                  <Text style={styles.achievementEmoji}>🛡️</Text>
+                </View>
+                <Text style={styles.achievementTitle}>Consistency King</Text>
+                <Text style={styles.achievementDesc}>Log meals for 21 days straight</Text>
+                <Text style={styles.achievementProgress}>57/21</Text>
+                <View style={styles.achievementBarContainer}>
+                  <View style={[styles.achievementBar, { width: '100%', backgroundColor: '#3B82F6' }]} />
+                </View>
+                <Text style={styles.achievementPercent}>271%</Text>
               </View>
-              <Text style={styles.achievementTitle}>Consistency King</Text>
-              <Text style={styles.achievementDesc}>Log meals for 21 days straight</Text>
-              <Text style={styles.achievementProgress}>57/21</Text>
-              <View style={styles.achievementBarContainer}>
-                <View style={[styles.achievementBar, { width: '100%', backgroundColor: '#3B82F6' }]} />
-              </View>
-              <Text style={styles.achievementPercent}>271%</Text>
             </View>
 
             {/* Power User - EARNED */}
-            <View style={[styles.achievementCard, { borderColor: '#FBBF24', backgroundColor: '#FFFBEB' }]}>
-              <View style={[styles.achievementIcon, { backgroundColor: '#FEF3C7' }]}>
-                <Text style={styles.achievementEmoji}>⚡</Text>
+            <View style={styles.achievementCard}>
+              <View style={[styles.achievementCardInner, { borderColor: '#FBBF24', backgroundColor: '#FFFBEB' }]}>
+                <View style={[styles.achievementIcon, { backgroundColor: '#FEF3C7' }]}>
+                  <Text style={styles.achievementEmoji}>⚡</Text>
+                </View>
+                <Text style={styles.achievementTitle}>Power User</Text>
+                <Text style={styles.achievementDesc}>Use all features in one day</Text>
+                <Text style={styles.earnedBadge}>⭐ Earned!</Text>
               </View>
-              <Text style={styles.achievementTitle}>Power User</Text>
-              <Text style={styles.achievementDesc}>Use all features in one day</Text>
-              <Text style={styles.earnedBadge}>⭐ Earned!</Text>
             </View>
           </View>
         </View>
@@ -245,16 +261,17 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
     paddingBottom: 24,
+    backgroundColor: '#F9FAFB',
   },
   headerTitle: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#374151',
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
+    color: '#6B7280',
   },
   scrollView: {
     flex: 1,
@@ -403,11 +420,16 @@ const styles = StyleSheet.create({
   achievementsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    marginHorizontal: -6,
   },
   achievementCard: {
-    width: '48%',
+    flexBasis: '50%',
+    paddingHorizontal: 6,
+    paddingVertical: 6,
+  },
+  achievementCardInner: {
     backgroundColor: 'white',
+    minHeight: accessibility.minimumTouchSize,
     borderWidth: 2,
     borderRadius: 12,
     padding: 12,

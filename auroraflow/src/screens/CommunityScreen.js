@@ -10,22 +10,26 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { spacing, accessibility } from '../constants/theme';
+import { Colors } from '../constants/Colors';
 
 export default function CommunityScreen() {
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#EC4899', '#F472B6']} style={styles.header}>
+      <View style={[styles.header, { paddingTop: 20 + insets.top }]}>
         <Text style={styles.headerTitle}>Care Circle</Text>
         <Text style={styles.headerSubtitle}>Your diabetes community</Text>
-      </LinearGradient>
+      </View>
 
       <ScrollView style={styles.scrollView}>
         {/* Welcome Message */}
         <View style={styles.welcomeCard}>
           <View style={styles.welcomeHeader}>
-            <Ionicons name="people" size={32} color="#EC4899" />
+            <Ionicons name="people" size={32} color={Colors.text.header} />
             <View style={styles.welcomeText}>
               <Text style={styles.welcomeTitle}>Welcome to Care Circle!</Text>
               <Text style={styles.welcomeSubtitle}>
@@ -36,7 +40,7 @@ export default function CommunityScreen() {
           <Text style={styles.welcomeDescription}>
             This is a safe space where people with diabetes share experiences,
             celebrate milestones, ask questions, and support each other.
-            You're never alone on this journey! 💜
+            You're never alone on this journey!
           </Text>
         </View>
 
@@ -75,41 +79,53 @@ export default function CommunityScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Community Topics</Text>
           <View style={styles.topicsGrid}>
-            <TouchableOpacity style={[styles.topicCard, { backgroundColor: '#FEF3C7' }]}>
-              <Text style={styles.topicIcon}>🏆</Text>
-              <Text style={styles.topicName}>Milestones</Text>
-              <Text style={styles.topicCount}>2.4K posts</Text>
-            </TouchableOpacity>
+            <View style={styles.topicCard}>
+              <TouchableOpacity style={[styles.topicCardInner, { backgroundColor: '#FEF3C7' }]}>
+                <Text style={styles.topicIcon}>🏆</Text>
+                <Text style={styles.topicName}>Milestones</Text>
+                <Text style={styles.topicCount}>2.4K posts</Text>
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity style={[styles.topicCard, { backgroundColor: '#D1FAE5' }]}>
-              <Text style={styles.topicIcon}>💪</Text>
-              <Text style={styles.topicName}>Exercise</Text>
-              <Text style={styles.topicCount}>1.8K posts</Text>
-            </TouchableOpacity>
+            <View style={styles.topicCard}>
+              <TouchableOpacity style={[styles.topicCardInner, { backgroundColor: '#D1FAE5' }]}>
+                <Text style={styles.topicIcon}>💪</Text>
+                <Text style={styles.topicName}>Exercise</Text>
+                <Text style={styles.topicCount}>1.8K posts</Text>
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity style={[styles.topicCard, { backgroundColor: '#DBEAFE' }]}>
-              <Text style={styles.topicIcon}>🍽️</Text>
-              <Text style={styles.topicName}>Nutrition</Text>
-              <Text style={styles.topicCount}>3.2K posts</Text>
-            </TouchableOpacity>
+            <View style={styles.topicCard}>
+              <TouchableOpacity style={[styles.topicCardInner, { backgroundColor: '#DBEAFE' }]}>
+                <Text style={styles.topicIcon}>🍽️</Text>
+                <Text style={styles.topicName}>Nutrition</Text>
+                <Text style={styles.topicCount}>3.2K posts</Text>
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity style={[styles.topicCard, { backgroundColor: '#FCE7F3' }]}>
-              <Text style={styles.topicIcon}>💗</Text>
-              <Text style={styles.topicName}>Support</Text>
-              <Text style={styles.topicCount}>4.1K posts</Text>
-            </TouchableOpacity>
+            <View style={styles.topicCard}>
+              <TouchableOpacity style={[styles.topicCardInner, { backgroundColor: '#FCE7F3' }]}>
+                <Text style={styles.topicIcon}>💗</Text>
+                <Text style={styles.topicName}>Support</Text>
+                <Text style={styles.topicCount}>4.1K posts</Text>
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity style={[styles.topicCard, { backgroundColor: '#E0E7FF' }]}>
-              <Text style={styles.topicIcon}>💡</Text>
-              <Text style={styles.topicName}>Tips & Tricks</Text>
-              <Text style={styles.topicCount}>1.5K posts</Text>
-            </TouchableOpacity>
+            <View style={styles.topicCard}>
+              <TouchableOpacity style={[styles.topicCardInner, { backgroundColor: '#E0E7FF' }]}>
+                <Text style={styles.topicIcon}>💡</Text>
+                <Text style={styles.topicName}>Tips & Tricks</Text>
+                <Text style={styles.topicCount}>1.5K posts</Text>
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity style={[styles.topicCard, { backgroundColor: '#FED7AA' }]}>
-              <Text style={styles.topicIcon}>❓</Text>
-              <Text style={styles.topicName}>Q&A</Text>
-              <Text style={styles.topicCount}>2.9K posts</Text>
-            </TouchableOpacity>
+            <View style={styles.topicCard}>
+              <TouchableOpacity style={[styles.topicCardInner, { backgroundColor: '#FED7AA' }]}>
+                <Text style={styles.topicIcon}>❓</Text>
+                <Text style={styles.topicName}>Q&A</Text>
+                <Text style={styles.topicCount}>2.9K posts</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -242,9 +258,9 @@ export default function CommunityScreen() {
 
       {/* Floating Action Button */}
       <TouchableOpacity style={styles.fab}>
-        <LinearGradient colors={['#EC4899', '#F472B6']} style={styles.fabGradient}>
+        <View style={styles.fabContent}>
           <Ionicons name="add" size={28} color="white" />
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -259,28 +275,31 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
+    backgroundColor: '#F9FAFB',
   },
   headerTitle: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#374151',
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.9)',
+    color: '#6B7280',
   },
   scrollView: {
     flex: 1,
   },
   welcomeCard: {
-    backgroundColor: '#FCE7F3',
+    backgroundColor: '#FFFFFF',
     marginHorizontal: 16,
     marginTop: 16,
     padding: 16,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#EC4899',
+    borderLeftColor: '#8B5CF6',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
   welcomeHeader: {
     flexDirection: 'row',
@@ -294,16 +313,16 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#831843',
+    color: '#1F2937',
     marginBottom: 2,
   },
   welcomeSubtitle: {
     fontSize: 13,
-    color: '#9F1239',
+    color: '#6B7280',
   },
   welcomeDescription: {
     fontSize: 14,
-    color: '#831843',
+    color: '#1F2937',
     lineHeight: 20,
   },
   statsContainer: {
@@ -376,17 +395,23 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#EC4899',
+    color: '#8B5CF6',
   },
   topicsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    marginHorizontal: -5,
   },
   topicCard: {
-    width: '48%',
-    padding: 16,
+    flexBasis: '50%',
+    paddingHorizontal: 5,
+    paddingVertical: 5,
+  },
+  topicCardInner: {
+    padding: spacing.md,
     borderRadius: 12,
+    minHeight: accessibility.minimumTouchSize,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   topicIcon: {
@@ -508,13 +533,14 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+    backgroundColor: '#8B5CF6',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
-  fabGradient: {
+  fabContent: {
     width: 56,
     height: 56,
     borderRadius: 28,

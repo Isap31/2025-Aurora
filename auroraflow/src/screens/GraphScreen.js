@@ -11,10 +11,14 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LineChart } from 'react-native-chart-kit';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { spacing } from '../constants/theme';
+import { Colors } from '../constants/Colors';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function GraphScreen() {
+  const insets = useSafeAreaInsets();
   const [readings, setReadings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState(7);
@@ -100,9 +104,9 @@ export default function GraphScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <LinearGradient colors={['#8B5CF6', '#3B82F6']} style={styles.header}>
+        <View style={styles.header}>
           <Text style={styles.headerTitle}>Trends</Text>
-        </LinearGradient>
+        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8B5CF6" />
           <Text style={styles.loadingText}>Loading trends...</Text>
@@ -113,10 +117,10 @@ export default function GraphScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#8B5CF6', '#3B82F6']} style={styles.header}>
+      <View style={[styles.header, { paddingTop: 20 + insets.top }]}>
         <Text style={styles.headerTitle}>Trends</Text>
         <Text style={styles.headerSubtitle}>Glucose over time</Text>
-      </LinearGradient>
+      </View>
 
       <ScrollView style={styles.scrollView}>
         {/* Time Period Selector */}
@@ -281,16 +285,17 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
     paddingBottom: 24,
+    backgroundColor: '#F9FAFB',
   },
   headerTitle: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#374151',
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
+    color: '#6B7280',
   },
   scrollView: {
     flex: 1,

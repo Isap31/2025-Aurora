@@ -17,6 +17,7 @@ import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, accessibility } from '../../constants/theme';
 import authService from '../../services/authService';
+import { Colors } from '../../constants/Colors';
 
 const DAILY_AFFIRMATIONS = [
   "Great job staying in range today! 🎉",
@@ -205,14 +206,14 @@ export default function DashboardScreen({ navigation }) {
       return;
     }
 
-    // Save locally (no backend needed)
+    // Create reading object
     const newReading = {
       glucose_value: parsedValue,
       timestamp: new Date().toISOString(),
       notes: glucoseNotes || null,
     };
 
-    // Update latest glucose immediately
+    // Update latest glucose immediately (optimistic update)
     setLatestGlucose(newReading);
 
     // Clear form and close modal
@@ -220,8 +221,40 @@ export default function DashboardScreen({ navigation }) {
     setGlucoseNotes('');
     setLogGlucoseModalVisible(false);
 
-    // Show success message
-    Alert.alert('Success! 🎉', `Glucose reading saved: ${parsedValue} mg/dL\n+10 XP earned!`);
+    // Save to database
+    try {
+      const response = await fetch('http://localhost:3000/api/glucose', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          value: parsedValue,
+          timestamp: newReading.timestamp,
+          notes: glucoseNotes || null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save reading');
+      }
+
+      const savedReading = await response.json();
+      console.log('Glucose reading saved to database:', savedReading);
+
+      // Refresh dashboard data to get updated stats
+      await loadDashboard();
+
+      // Show success message
+      Alert.alert('Success! 🎉', `Glucose reading saved: ${parsedValue} mg/dL\n+10 XP earned!`);
+    } catch (error) {
+      console.error('Error saving glucose reading:', error);
+      Alert.alert(
+        'Save Failed',
+        'Could not save to database. Your reading was saved locally and will sync when connection is restored.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const getGlucoseColor = (value) => {
@@ -269,22 +302,17 @@ export default function DashboardScreen({ navigation }) {
         }
       >
         {/* 1. HEADER */}
-        <LinearGradient
-          colors={['#8B5CF6', '#3B82F6']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.header, { paddingTop: 10 + insets.top }]}
-        >
+        <View style={[styles.header, { paddingTop: 10 + insets.top }]}>
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
-              <Ionicons name="water" size={24} color="#FFF" />
+              <Ionicons name="water" size={24} color={Colors.text.header} />
               <Text style={styles.logoText}>AuroraFlow</Text>
             </View>
             <TouchableOpacity
               onPress={() => navigation.navigate('Profile')}
               style={styles.profileButton}
             >
-              <Ionicons name="person-circle" size={36} color="#FFF" />
+              <Ionicons name="person-circle" size={36} color={Colors.text.header} />
             </TouchableOpacity>
           </View>
 
@@ -292,7 +320,7 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.glucoseHeaderValue}>{latestGlucose?.glucose_level || '--'}</Text>
             <Text style={styles.glucoseHeaderUnit}>mg/dL</Text>
           </View>
-        </LinearGradient>
+        </View>
 
         {/* 2. PERSONALIZED GREETING CARD */}
         <View style={styles.greetingCard}>
@@ -374,13 +402,10 @@ export default function DashboardScreen({ navigation }) {
               pressed && styles.quickActionPressed
             ]}
           >
-            <LinearGradient
-              colors={['#8B5CF6', '#7C3AED']}
-              style={styles.quickActionGradient}
-            >
-              <Text style={styles.quickActionIcon}>🩸</Text>
+            <View style={styles.quickActionContent}>
+              <Ionicons name="water-outline" size={32} color={Colors.text.header} />
               <Text style={styles.quickActionLabel}>Log Glucose</Text>
-            </LinearGradient>
+            </View>
           </Pressable>
 
           {/* Log Meal */}
@@ -391,13 +416,10 @@ export default function DashboardScreen({ navigation }) {
               pressed && styles.quickActionPressed
             ]}
           >
-            <LinearGradient
-              colors={['#F97316', '#EA580C']}
-              style={styles.quickActionGradient}
-            >
-              <Text style={styles.quickActionIcon}>🍽️</Text>
+            <View style={styles.quickActionContent}>
+              <Ionicons name="restaurant-outline" size={32} color={Colors.text.header} />
               <Text style={styles.quickActionLabel}>Log Meal</Text>
-            </LinearGradient>
+            </View>
           </Pressable>
 
           {/* Exercise */}
@@ -408,16 +430,13 @@ export default function DashboardScreen({ navigation }) {
               pressed && styles.quickActionPressed
             ]}
           >
-            <LinearGradient
-              colors={['#3B82F6', '#2563EB']}
-              style={styles.quickActionGradient}
-            >
-              <Text style={styles.quickActionIcon}>💪</Text>
+            <View style={styles.quickActionContent}>
+              <Ionicons name="fitness-outline" size={32} color={Colors.text.header} />
               <Text style={styles.quickActionLabel}>Exercise</Text>
-            </LinearGradient>
+            </View>
           </Pressable>
 
-          {/* Ask Aurora */}
+          {/* Call Aurora */}
           <Pressable
             onPress={() => navigation.navigate('Aurora')}
             style={({ pressed }) => [
@@ -425,13 +444,10 @@ export default function DashboardScreen({ navigation }) {
               pressed && styles.quickActionPressed
             ]}
           >
-            <LinearGradient
-              colors={['#8B5CF6', '#7C3AED']}
-              style={styles.quickActionGradient}
-            >
-              <Text style={styles.quickActionIcon}>🤖</Text>
-              <Text style={styles.quickActionLabel}>Ask Aurora</Text>
-            </LinearGradient>
+            <View style={styles.quickActionContent}>
+              <Ionicons name="call-outline" size={32} color={Colors.text.header} />
+              <Text style={styles.quickActionLabel}>Call Aurora</Text>
+            </View>
           </Pressable>
         </View>
 
@@ -890,6 +906,15 @@ export default function DashboardScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      {/* FLOATING CALL BUTTON */}
+      <TouchableOpacity
+        style={styles.floatingCallButton}
+        onPress={() => navigation.navigate('Aurora')}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="call" size={28} color="#FFF" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -910,6 +935,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: spacing.md,
     paddingBottom: 10,
+    backgroundColor: '#F9FAFB',
   },
   headerContent: {
     flexDirection: 'row',
@@ -924,7 +950,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFF',
+    color: '#374151',
     marginLeft: 8,
   },
   profileButton: {
@@ -1058,32 +1084,32 @@ const styles = StyleSheet.create({
     width: '48%',
     aspectRatio: 1.3,
     borderRadius: 16,
-    overflow: 'hidden',
     marginBottom: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   quickActionPressed: {
     transform: [{ scale: 0.95 }],
+    opacity: 0.7,
   },
-  quickActionGradient: {
+  quickActionContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 12,
   },
-  quickActionIcon: {
-    fontSize: 32,
-    marginBottom: 6,
-  },
   quickActionLabel: {
     fontSize: 13,
-    fontWeight: 'bold',
-    color: '#FFF',
+    fontWeight: '600',
+    color: '#1F2937',
     textAlign: 'center',
+    marginTop: 8,
   },
 
   // 6. TODAY'S INSIGHT STYLES
@@ -1545,5 +1571,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#FFF',
+  },
+
+  // FLOATING CALL BUTTON
+  floatingCallButton: {
+    position: 'absolute',
+    bottom: 100,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#8B5CF6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

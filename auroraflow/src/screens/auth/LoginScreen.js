@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { spacing, accessibility } from '../../constants/theme';
 import authService from '../../services/authService';
 
 export default function LoginScreen({ navigation }) {

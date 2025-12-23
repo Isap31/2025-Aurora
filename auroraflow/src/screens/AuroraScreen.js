@@ -13,9 +13,12 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { spacing, accessibility } from '../constants/theme';
 import { anthropicService } from '../services/anthropicService';
 
 export default function AuroraScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState([
     {
       id: '1',
@@ -119,7 +122,7 @@ export default function AuroraScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#8B5CF6', '#3B82F6']} style={styles.header}>
+      <LinearGradient colors={['#8B5CF6', '#3B82F6']} style={[styles.header, { paddingTop: 20 + insets.top }]}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={28} color="white" />
@@ -278,8 +281,8 @@ const styles = StyleSheet.create({
   },
   messageBubble: {
     flexDirection: 'row',
-    marginBottom: 16,
-    alignItems: 'flex-end',
+    marginBottom: spacing.md,
+    alignItems: 'flex-start',
   },
   userBubble: {
     justifyContent: 'flex-end',

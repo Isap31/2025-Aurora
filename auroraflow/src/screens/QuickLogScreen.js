@@ -7,11 +7,15 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { spacing, accessibility } from '../constants/theme';
 
 export default function QuickLogScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
+
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#8B5CF6', '#3B82F6']} style={styles.header}>
+      <LinearGradient colors={['#8B5CF6', '#3B82F6']} style={[styles.header, { paddingTop: 20 + insets.top }]}>
         <Text style={styles.headerTitle}>Quick Log</Text>
         <Text style={styles.headerSubtitle}>What would you like to track?</Text>
       </LinearGradient>
@@ -62,8 +66,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    paddingTop: 60,
-    paddingBottom: 24,
+    paddingBottom: spacing.lg,
   },
   headerTitle: {
     fontSize: 32,
@@ -77,12 +80,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 16,
+    padding: spacing.md,
   },
   logCard: {
-    padding: 24,
-    borderRadius: 16,
-    marginBottom: 16,
+    padding: spacing.lg,
+    borderRadius: spacing.md,
+    marginBottom: spacing.md,
+    minHeight: accessibility.minimumTouchSize,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -106,11 +110,11 @@ const styles = StyleSheet.create({
   },
   tipCard: {
     backgroundColor: '#EDE9FE',
-    padding: 16,
+    padding: spacing.md,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   tipIcon: {
     fontSize: 32,

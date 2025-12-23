@@ -10,8 +10,12 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { spacing, accessibility } from '../constants/theme';
 
 export default function ProfileScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
+
   const handleLogout = () => {
     Alert.alert(
       'Logout',
@@ -37,10 +41,10 @@ export default function ProfileScreen({ navigation }) {
         {/* Header with Profile Picture */}
         <LinearGradient
           colors={['#8B5CF6', '#3B82F6']}
-          style={styles.header}
+          style={[styles.header, { paddingTop: 40 + insets.top }]}
         >
           <TouchableOpacity
-            style={styles.backButton}
+            style={[styles.backButton, { top: 20 + insets.top }]}
             onPress={() => navigation.goBack()}
           >
             <Ionicons name="arrow-back" size={28} color="white" />
@@ -260,17 +264,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
   header: {
-    padding: 24,
-    paddingTop: 40,
+    padding: spacing.lg,
     alignItems: 'center',
   },
   backButton: {
     position: 'absolute',
-    top: 60,
     left: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: accessibility.minimumTouchSize,
+    height: accessibility.minimumTouchSize,
+    borderRadius: accessibility.minimumTouchSize / 2,
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -283,7 +285,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
     borderWidth: 3,
     borderColor: 'white',
   },
@@ -316,10 +318,10 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    borderRadius: spacing.md,
+    padding: spacing.lg,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -330,10 +332,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   infoGrid: {
-    gap: 16,
+    gap: spacing.md,
   },
   infoItem: {
     flexDirection: 'row',
@@ -384,11 +386,13 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: '#EF4444',
-    marginHorizontal: 16,
-    marginTop: 24,
-    padding: 16,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.lg,
+    padding: spacing.md,
     borderRadius: 12,
     alignItems: 'center',
+    minHeight: accessibility.minimumTouchSize,
+    justifyContent: 'center',
   },
   logoutText: {
     color: 'white',

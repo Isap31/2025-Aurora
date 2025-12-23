@@ -11,8 +11,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { spacing } from '../constants/theme';
+import { Colors } from '../constants/Colors';
 
 export default function HistoryScreen() {
+  const insets = useSafeAreaInsets();
   const [readings, setReadings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -131,9 +135,9 @@ export default function HistoryScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <LinearGradient colors={['#8B5CF6', '#3B82F6']} style={styles.header}>
+        <View style={styles.header}>
           <Text style={styles.headerTitle}>History</Text>
-        </LinearGradient>
+        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#8B5CF6" />
           <Text style={styles.loadingText}>Loading your readings...</Text>
@@ -145,9 +149,9 @@ export default function HistoryScreen() {
   if (readings.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
-        <LinearGradient colors={['#8B5CF6', '#3B82F6']} style={styles.header}>
+        <View style={styles.header}>
           <Text style={styles.headerTitle}>History</Text>
-        </LinearGradient>
+        </View>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>📊</Text>
           <Text style={styles.emptyTitle}>No readings yet</Text>
@@ -161,10 +165,10 @@ export default function HistoryScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#8B5CF6', '#3B82F6']} style={styles.header}>
+      <View style={[styles.header, { paddingTop: 20 + insets.top }]}>
         <Text style={styles.headerTitle}>History</Text>
         <Text style={styles.headerSubtitle}>{readings.length} total readings</Text>
-      </LinearGradient>
+      </View>
 
       <ScrollView
         style={styles.scrollView}
@@ -236,16 +240,17 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 60,
     paddingBottom: 24,
+    backgroundColor: '#F9FAFB',
   },
   headerTitle: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#374151',
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
+    color: '#6B7280',
   },
   scrollView: {
     flex: 1,

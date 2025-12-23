@@ -11,8 +11,11 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { spacing, accessibility } from '../constants/theme';
 
 export default function LogExerciseScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [activityType, setActivityType] = useState('');
   const [duration, setDuration] = useState('');
   const [intensity, setIntensity] = useState('');
@@ -94,7 +97,7 @@ export default function LogExerciseScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#3B82F6', '#60A5FA']} style={styles.header}>
+      <LinearGradient colors={['#3B82F6', '#60A5FA']} style={[styles.header, { paddingTop: 20 + insets.top }]}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={28} color="white" />
@@ -109,21 +112,22 @@ export default function LogExerciseScreen({ navigation }) {
           <Text style={styles.sectionTitle}>Activity Type</Text>
           <View style={styles.activityGrid}>
             {activityTypes.map((activity) => (
-              <TouchableOpacity
-                key={activity.id}
-                style={[
-                  styles.activityButton,
-                  { backgroundColor: activity.color },
-                  activityType === activity.id && styles.activityButtonActive,
-                ]}
-                onPress={() => setActivityType(activity.id)}
-              >
+              <View key={activity.id} style={styles.activityButton}>
+                <TouchableOpacity
+                  style={[
+                    styles.activityButtonInner,
+                    { backgroundColor: activity.color },
+                    activityType === activity.id && styles.activityButtonActive,
+                  ]}
+                  onPress={() => setActivityType(activity.id)}
+                >
                 <Text style={styles.activityIcon}>{activity.icon}</Text>
                 <Text style={styles.activityLabel}>{activity.name}</Text>
                 {activityType === activity.id && (
                   <Ionicons name="checkmark-circle" size={20} color="#10B981" style={styles.checkmark} />
                 )}
-              </TouchableOpacity>
+                </TouchableOpacity>
+              </View>
             ))}
           </View>
         </View>
@@ -284,15 +288,21 @@ const styles = StyleSheet.create({
   activityGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    marginHorizontal: -5,
   },
   activityButton: {
-    width: '48%',
-    padding: 16,
+    flexBasis: '50%',
+    paddingHorizontal: 5,
+    paddingVertical: 5,
+  },
+  activityButtonInner: {
+    padding: spacing.md,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
+    minHeight: accessibility.minimumTouchSize,
+    justifyContent: 'center',
   },
   activityButtonActive: {
     borderColor: '#10B981',

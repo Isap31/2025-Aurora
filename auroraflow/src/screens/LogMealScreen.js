@@ -11,8 +11,11 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { spacing, accessibility } from '../constants/theme';
 
 export default function LogMealScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [mealName, setMealName] = useState('');
   const [carbs, setCarbs] = useState('');
   const [calories, setCalories] = useState('');
@@ -90,7 +93,7 @@ export default function LogMealScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#F97316', '#FB923C']} style={styles.header}>
+      <LinearGradient colors={['#F97316', '#FB923C']} style={[styles.header, { paddingTop: 20 + insets.top }]}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={28} color="white" />
@@ -105,21 +108,22 @@ export default function LogMealScreen({ navigation }) {
           <Text style={styles.sectionTitle}>Meal Type</Text>
           <View style={styles.mealTypeGrid}>
             {mealTypes.map((type) => (
-              <TouchableOpacity
-                key={type.id}
-                style={[
-                  styles.mealTypeButton,
-                  { backgroundColor: type.color },
-                  mealType === type.id && styles.mealTypeButtonActive,
-                ]}
-                onPress={() => setMealType(type.id)}
-              >
-                <Text style={styles.mealTypeIcon}>{type.icon}</Text>
-                <Text style={styles.mealTypeLabel}>{type.label}</Text>
-                {mealType === type.id && (
-                  <Ionicons name="checkmark-circle" size={20} color="#10B981" style={styles.checkmark} />
-                )}
-              </TouchableOpacity>
+              <View key={type.id} style={styles.mealTypeButton}>
+                <TouchableOpacity
+                  style={[
+                    styles.mealTypeButtonInner,
+                    { backgroundColor: type.color },
+                    mealType === type.id && styles.mealTypeButtonActive,
+                  ]}
+                  onPress={() => setMealType(type.id)}
+                >
+                  <Text style={styles.mealTypeIcon}>{type.icon}</Text>
+                  <Text style={styles.mealTypeLabel}>{type.label}</Text>
+                  {mealType === type.id && (
+                    <Ionicons name="checkmark-circle" size={20} color="#10B981" style={styles.checkmark} />
+                  )}
+                </TouchableOpacity>
+              </View>
             ))}
           </View>
         </View>
@@ -291,15 +295,21 @@ const styles = StyleSheet.create({
   mealTypeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    marginHorizontal: -5,
   },
   mealTypeButton: {
-    width: '48%',
-    padding: 16,
+    flexBasis: '50%',
+    paddingHorizontal: 5,
+    paddingVertical: 5,
+  },
+  mealTypeButtonInner: {
+    padding: spacing.md,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
+    minHeight: accessibility.minimumTouchSize,
+    justifyContent: 'center',
   },
   mealTypeButtonActive: {
     borderColor: '#10B981',
