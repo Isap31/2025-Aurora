@@ -15,9 +15,10 @@ import {
   Divider,
 } from 'react-native-paper';
 import { colors, spacing, typography } from '../../constants/theme';
-import authService from '../../services/auth/authService';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginScreen({ navigation }) {
+  const { continueAsGuest } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -82,10 +83,11 @@ export default function LoginScreen({ navigation }) {
   // Handle guest mode
   const handleGuestMode = async () => {
     setLoading(true);
+    setErrors({});
     try {
-      await authService.setGuestMode();
+      await continueAsGuest();
       AccessibilityInfo.announceForAccessibility('Continuing as guest');
-      // Navigation will be handled by auth state check
+      // Navigation will be handled automatically by auth state change
     } catch (error) {
       setErrors({ general: 'Failed to enter guest mode. Please try again.' });
       AccessibilityInfo.announceForAccessibility(
