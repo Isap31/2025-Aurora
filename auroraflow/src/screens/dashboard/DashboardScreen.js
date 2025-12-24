@@ -67,10 +67,16 @@ export default function DashboardScreen({ navigation }) {
   const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
   const [insightsModalVisible, setInsightsModalVisible] = useState(false);
   const [communityModalVisible, setCommunityModalVisible] = useState(false);
+  const [budgetMealsModalVisible, setBudgetMealsModalVisible] = useState(false);
 
   // Modal input states
   const [glucoseValue, setGlucoseValue] = useState('');
   const [glucoseNotes, setGlucoseNotes] = useState('');
+  const [weeklyBudget, setWeeklyBudget] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [householdSize, setHouseholdSize] = useState('1');
+  const [isLoadingMeals, setIsLoadingMeals] = useState(false);
+  const [showMealPlaceholder, setShowMealPlaceholder] = useState(false);
 
   // Daily affirmation state
   const [dailyAffirmation, setDailyAffirmation] = useState('');
@@ -257,6 +263,22 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
+  const handleFindMeals = async () => {
+    if (!weeklyBudget) {
+      Alert.alert('Required', 'Please enter your weekly food budget');
+      return;
+    }
+
+    setIsLoadingMeals(true);
+    setShowMealPlaceholder(false);
+
+    // Simulate API call with brief loading
+    setTimeout(() => {
+      setIsLoadingMeals(false);
+      setShowMealPlaceholder(true);
+    }, 1500);
+  };
+
   const getGlucoseColor = (value) => {
     if (value >= 70 && value <= 180) {
       return {
@@ -296,8 +318,8 @@ export default function DashboardScreen({ navigation }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#8B5CF6']}
-            tintColor="#8B5CF6"
+            colors={['#374151']}
+            tintColor="#374151"
           />
         }
       >
@@ -308,15 +330,23 @@ export default function DashboardScreen({ navigation }) {
               <Ionicons name="water" size={24} color={Colors.text.header} />
               <Text style={styles.logoText}>AuroraFlow</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Profile')}
-              style={styles.profileButton}
-            >
-              <Ionicons name="person-circle" size={36} color={Colors.text.header} />
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Aurora')}
+                style={styles.callButton}
+              >
+                <Ionicons name="call" size={22} color={Colors.text.header} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Profile')}
+                style={styles.profileButton}
+              >
+                <Ionicons name="person-circle" size={36} color={Colors.text.header} />
+              </TouchableOpacity>
+            </View>
           </View>
 
-          <View style={[styles.glucoseBadge, { backgroundColor: getGlucoseColorValue(latestGlucose?.glucose_level) }]}>
+          <View style={styles.glucoseBadge}>
             <Text style={styles.glucoseHeaderValue}>{latestGlucose?.glucose_level || '--'}</Text>
             <Text style={styles.glucoseHeaderUnit}>mg/dL</Text>
           </View>
@@ -325,7 +355,7 @@ export default function DashboardScreen({ navigation }) {
         {/* 2. PERSONALIZED GREETING CARD */}
         <View style={styles.greetingCard}>
           <Text style={styles.greetingText}>
-            {greeting.text}, {userName}! {greeting.emoji}
+            {greeting.text}, {userName}!
           </Text>
         </View>
 
@@ -333,7 +363,7 @@ export default function DashboardScreen({ navigation }) {
         {isGuest && !guestBannerDismissed && (
           <View style={styles.guestBanner}>
             <View style={styles.guestBannerContent}>
-              <Ionicons name="information-circle" size={24} color="#8B5CF6" style={styles.guestBannerIcon} />
+              <Ionicons name="information-circle" size={24} color="#374151" style={styles.guestBannerIcon} />
               <View style={styles.guestBannerText}>
                 <Text style={styles.guestBannerTitle}>You're in Guest Mode</Text>
                 <Text style={styles.guestBannerSubtitle}>
@@ -357,13 +387,13 @@ export default function DashboardScreen({ navigation }) {
         )}
 
         {/* 3. RECENT GLUCOSE CARD */}
-        <View style={[styles.glucoseCard, { backgroundColor: glucoseColor.bg }]}>
+        <View style={styles.glucoseCard}>
           <Text style={styles.glucoseCardTitle}>Latest Reading</Text>
-          <Text style={[styles.glucoseCardValue, { color: glucoseColor.text }]}>
+          <Text style={styles.glucoseCardValue}>
             {latestGlucose?.glucose_level || '--'} <Text style={styles.glucoseCardUnit}>mg/dL</Text>
           </Text>
           <Text style={styles.glucoseTimestamp}>{formatTimestamp(latestGlucose?.reading_time)}</Text>
-          <Text style={[styles.glucoseStatus, { color: glucoseColor.statusColor }]}>
+          <Text style={styles.glucoseStatus}>
             {getGlucoseStatus(latestGlucose?.glucose_level)}
           </Text>
         </View>
@@ -371,21 +401,21 @@ export default function DashboardScreen({ navigation }) {
         {/* 4. WEEKLY STATS ROW */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Ionicons name="analytics" size={32} color="#8B5CF6" />
+            <Ionicons name="analytics" size={32} color="#374151" />
             <Text style={styles.statValue}>{weeklyAverage}</Text>
             <Text style={styles.statLabel}>mg/dL</Text>
             <Text style={styles.statSubLabel}>Average</Text>
           </View>
 
           <View style={styles.statCard}>
-            <Ionicons name="checkmark-circle" size={32} color="#10B981" />
+            <Ionicons name="checkmark-circle" size={32} color="#374151" />
             <Text style={styles.statValue}>{timeInRange}%</Text>
             <Text style={styles.statLabel}>Time in</Text>
             <Text style={styles.statSubLabel}>Range</Text>
           </View>
 
           <View style={styles.statCard}>
-            <Ionicons name="clipboard" size={32} color="#3B82F6" />
+            <Ionicons name="clipboard" size={32} color="#374151" />
             <Text style={styles.statValue}>{totalLogs}</Text>
             <Text style={styles.statLabel}>Total</Text>
             <Text style={styles.statSubLabel}>Logs</Text>
@@ -451,6 +481,22 @@ export default function DashboardScreen({ navigation }) {
           </Pressable>
         </View>
 
+        {/* BUDGET-FRIENDLY MEALS SECTION */}
+        <View style={styles.budgetMealsSection}>
+          <Text style={styles.sectionHeader}>Budget-Friendly Meals</Text>
+          <TouchableOpacity
+            style={styles.budgetMealsCard}
+            onPress={() => setBudgetMealsModalVisible(true)}
+          >
+            <Ionicons name="cart-outline" size={32} color="#374151" style={styles.budgetMealsIcon} />
+            <View style={styles.budgetMealsContent}>
+              <Text style={styles.budgetMealsTitle}>Meal Ideas For Your Budget</Text>
+              <Text style={styles.budgetMealsSubtitle}>Get affordable, diabetes-friendly meal suggestions</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+          </TouchableOpacity>
+        </View>
+
         {/* 6. TODAY'S INSIGHT CARD - HIDDEN FOR COMPACT VIEW */}
         {/* <View style={styles.insightCard}>
           <Text style={styles.insightIcon}>💡</Text>
@@ -511,25 +557,10 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.unitLabel}>mg/dL</Text>
           </View>
 
-          {/* Real-time Status Indicator */}
-          {glucoseValue ? (
-            <View style={[styles.statusIndicator, { backgroundColor: getGlucoseStatusColor(parseFloat(glucoseValue)).bg, borderColor: getGlucoseStatusColor(parseFloat(glucoseValue)).border }]}>
-              <Text style={styles.statusIcon}>{getGlucoseStatusIcon(parseFloat(glucoseValue))}</Text>
-              <View style={styles.statusTextContainer}>
-                <Text style={[styles.statusText, { color: getGlucoseStatusColor(parseFloat(glucoseValue)).text }]}>
-                  {getGlucoseStatusText(parseFloat(glucoseValue))}
-                </Text>
-                <Text style={styles.statusAdvice}>
-                  {getGlucoseStatusAdvice(parseFloat(glucoseValue))}
-                </Text>
-              </View>
-            </View>
-          ) : null}
-
           {/* Time Display */}
           <View style={styles.timeContainer}>
-            <Text style={styles.timeIcon}>🕐</Text>
-            <View>
+            <Ionicons name="time-outline" size={24} color="#6B7280" />
+            <View style={{ marginLeft: 12 }}>
               <Text style={styles.modalLabel}>Time</Text>
               <Text style={styles.modalTimeValue}>
                 {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
@@ -556,18 +587,11 @@ export default function DashboardScreen({ navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.saveButtonWrapper, !glucoseValue && styles.saveButtonDisabled]}
+              style={[styles.saveButtonPrimary, !glucoseValue && styles.saveButtonDisabled]}
               onPress={saveGlucoseReading}
               disabled={!glucoseValue}
             >
-              <LinearGradient
-                colors={glucoseValue ? ['#8B5CF6', '#3B82F6'] : ['#D1D5DB', '#9CA3AF']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.saveButton}
-              >
-                <Text style={styles.saveButtonText}>💾 Save Reading</Text>
-              </LinearGradient>
+              <Text style={styles.saveButtonText}>Save Reading</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -907,14 +931,104 @@ export default function DashboardScreen({ navigation }) {
         </View>
       </Modal>
 
-      {/* FLOATING CALL BUTTON */}
-      <TouchableOpacity
-        style={styles.floatingCallButton}
-        onPress={() => navigation.navigate('Aurora')}
-        activeOpacity={0.8}
+      {/* BUDGET MEALS MODAL */}
+      <Modal
+        isVisible={budgetMealsModalVisible}
+        onBackdropPress={() => setBudgetMealsModalVisible(false)}
+        onSwipeComplete={() => setBudgetMealsModalVisible(false)}
+        swipeDirection="down"
+        style={styles.modal}
       >
-        <Ionicons name="call" size={28} color="#FFF" />
-      </TouchableOpacity>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHandle} />
+          <Text style={styles.modalTitle}>Budget Meal Planner</Text>
+
+          {!showMealPlaceholder ? (
+            <>
+              <Text style={styles.modalLabel}>Weekly Food Budget</Text>
+              <View style={styles.budgetInputContainer}>
+                <Text style={styles.dollarSign}>$</Text>
+                <TextInput
+                  style={styles.budgetInput}
+                  placeholder="0"
+                  keyboardType="numeric"
+                  placeholderTextColor="#9CA3AF"
+                  value={weeklyBudget}
+                  onChangeText={setWeeklyBudget}
+                />
+              </View>
+
+              <Text style={styles.modalLabel}>Zip Code (Optional)</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Enter zip code"
+                keyboardType="numeric"
+                placeholderTextColor="#9CA3AF"
+                value={zipCode}
+                onChangeText={setZipCode}
+                maxLength={5}
+              />
+
+              <Text style={styles.modalLabel}>Household Size</Text>
+              <View style={styles.dropdownContainer}>
+                <TouchableOpacity
+                  style={[styles.dropdownButton, householdSize === '1' && styles.dropdownButtonActive]}
+                  onPress={() => setHouseholdSize('1')}
+                >
+                  <Text style={[styles.dropdownText, householdSize === '1' && styles.dropdownTextActive]}>1</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.dropdownButton, householdSize === '2' && styles.dropdownButtonActive]}
+                  onPress={() => setHouseholdSize('2')}
+                >
+                  <Text style={[styles.dropdownText, householdSize === '2' && styles.dropdownTextActive]}>2</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.dropdownButton, householdSize === '3-4' && styles.dropdownButtonActive]}
+                  onPress={() => setHouseholdSize('3-4')}
+                >
+                  <Text style={[styles.dropdownText, householdSize === '3-4' && styles.dropdownTextActive]}>3-4</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.dropdownButton, householdSize === '5+' && styles.dropdownButtonActive]}
+                  onPress={() => setHouseholdSize('5+')}
+                >
+                  <Text style={[styles.dropdownText, householdSize === '5+' && styles.dropdownTextActive]}>5+</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveButtonPrimary, isLoadingMeals && styles.saveButtonDisabled]}
+                onPress={handleFindMeals}
+                disabled={isLoadingMeals}
+              >
+                {isLoadingMeals ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Find Meals</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View style={styles.placeholderContainer}>
+              <Ionicons name="restaurant-outline" size={64} color="#6B7280" style={styles.placeholderIcon} />
+              <Text style={styles.placeholderTitle}>AI Meal Recommendations Coming Soon!</Text>
+              <Text style={styles.placeholderText}>
+                This feature will suggest affordable, diabetes-friendly meals based on your budget and location.
+              </Text>
+              <TouchableOpacity
+                style={styles.saveButtonPrimary}
+                onPress={() => {
+                  setShowMealPlaceholder(false);
+                  setBudgetMealsModalVisible(false);
+                }}
+              >
+                <Text style={styles.saveButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -947,11 +1061,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   logoText: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#374151',
     marginLeft: 8,
+  },
+  callButton: {
+    padding: 4,
   },
   profileButton: {
     padding: 4,
@@ -959,7 +1081,7 @@ const styles = StyleSheet.create({
   glucoseBadge: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    backgroundColor: '#10B981',
+    backgroundColor: '#374151',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -979,7 +1101,7 @@ const styles = StyleSheet.create({
 
   // 2. GREETING CARD STYLES
   greetingCard: {
-    backgroundColor: '#F3E8FF',
+    backgroundColor: '#F5F5F5',
     marginHorizontal: spacing.md,
     marginTop: spacing.sm,
     paddingVertical: 10,
@@ -989,16 +1111,19 @@ const styles = StyleSheet.create({
   greetingText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#7C3AED',
+    color: '#374151',
     textAlign: 'center',
   },
 
   // 3. RECENT GLUCOSE CARD STYLES
   glucoseCard: {
+    backgroundColor: '#FFFFFF',
     marginHorizontal: spacing.md,
     marginTop: spacing.sm,
     padding: spacing.md,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -1014,11 +1139,13 @@ const styles = StyleSheet.create({
   glucoseCardValue: {
     fontSize: 36,
     fontWeight: 'bold',
+    color: '#1F2937',
     marginBottom: 4,
   },
   glucoseCardUnit: {
     fontSize: 14,
     fontWeight: '600',
+    color: '#1F2937',
   },
   glucoseTimestamp: {
     fontSize: 12,
@@ -1029,6 +1156,7 @@ const styles = StyleSheet.create({
   glucoseStatus: {
     fontSize: 13,
     fontWeight: '600',
+    color: '#6B7280',
   },
 
   // 4. WEEKLY STATS ROW STYLES
@@ -1301,6 +1429,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
+  saveButtonPrimary: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#374151',
+  },
   saveButtonText: {
     fontSize: 16,
     fontWeight: '600',
@@ -1526,13 +1661,13 @@ const styles = StyleSheet.create({
 
   // GUEST MODE BANNER STYLES
   guestBanner: {
-    backgroundColor: '#F3E8FF',
+    backgroundColor: '#F5F5F5',
     marginHorizontal: spacing.md,
     marginTop: spacing.sm,
     padding: spacing.md,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: '#E5E5E5',
   },
   guestBannerContent: {
     flexDirection: 'row',
@@ -1548,12 +1683,12 @@ const styles = StyleSheet.create({
   guestBannerTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#7C3AED',
+    color: '#374151',
     marginBottom: 4,
   },
   guestBannerSubtitle: {
     fontSize: 13,
-    color: '#6B21A8',
+    color: '#6B7280',
     lineHeight: 18,
   },
   guestBannerClose: {
@@ -1561,7 +1696,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   guestBannerButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#374151',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -1573,21 +1708,107 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
 
-  // FLOATING CALL BUTTON
-  floatingCallButton: {
-    position: 'absolute',
-    bottom: 100,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#8B5CF6',
-    justifyContent: 'center',
+  // BUDGET MEALS STYLES
+  budgetMealsSection: {
+    marginHorizontal: 16,
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  budgetMealsCard: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  budgetMealsIcon: {
+    marginRight: 16,
+  },
+  budgetMealsContent: {
+    flex: 1,
+  },
+  budgetMealsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  budgetMealsSubtitle: {
+    fontSize: 13,
+    color: '#6B7280',
+    lineHeight: 18,
+  },
+  budgetInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  dollarSign: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginRight: 4,
+  },
+  budgetInput: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1F2937',
+    paddingVertical: 16,
+  },
+  dropdownContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 24,
+  },
+  dropdownButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+  },
+  dropdownButtonActive: {
+    backgroundColor: '#374151',
+  },
+  dropdownText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  dropdownTextActive: {
+    color: '#FFFFFF',
+  },
+  placeholderContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  placeholderIcon: {
+    marginBottom: 16,
+  },
+  placeholderTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  placeholderText: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: 24,
   },
 });
