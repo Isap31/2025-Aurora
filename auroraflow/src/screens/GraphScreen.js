@@ -108,7 +108,7 @@ export default function GraphScreen() {
           <Text style={styles.headerTitle}>Trends</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8B5CF6" />
+          <ActivityIndicator size="large" color="#374151" />
           <Text style={styles.loadingText}>Loading trends...</Text>
         </View>
       </SafeAreaView>
@@ -177,7 +177,7 @@ export default function GraphScreen() {
                 propsForDots: {
                   r: '4',
                   strokeWidth: '2',
-                  stroke: '#8B5CF6',
+                  stroke: '#374151',
                 },
               }}
               bezier
@@ -216,21 +216,21 @@ export default function GraphScreen() {
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statLabel}>Time in Range</Text>
-                <Text style={[styles.statValue, { color: stats.inRange >= 70 ? '#10B981' : '#F59E0B' }]}>
+                <Text style={[styles.statValue, { color: stats.inRange >= 70 ? '#6B7280' : '#6B7280' }]}>
                   {stats.inRange}%
                 </Text>
                 <Text style={styles.statUnit}>70-180 mg/dL</Text>
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statLabel}>Highest</Text>
-                <Text style={[styles.statValue, { color: stats.highest > 180 ? '#EF4444' : '#1F2937' }]}>
+                <Text style={[styles.statValue, { color: stats.highest > 180 ? '#374151' : '#1F2937' }]}>
                   {stats.highest}
                 </Text>
                 <Text style={styles.statUnit}>mg/dL</Text>
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statLabel}>Lowest</Text>
-                <Text style={[styles.statValue, { color: stats.lowest < 70 ? '#EF4444' : '#1F2937' }]}>
+                <Text style={[styles.statValue, { color: stats.lowest < 70 ? '#374151' : '#1F2937' }]}>
                   {stats.lowest}
                 </Text>
                 <Text style={styles.statUnit}>mg/dL</Text>
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   periodTextActive: {
-    color: '#8B5CF6',
+    color: '#374151',
   },
   chartContainer: {
     marginHorizontal: 16,
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   targetRangeLine: {
     width: 40,
     height: 2,
-    backgroundColor: '#10B981',
+    backgroundColor: '#6B7280',
     marginBottom: 4,
   },
   targetRangeText: {
