@@ -127,38 +127,66 @@ export default function CommunityScreen() {
       >
         <View style={styles.modalContent}>
           <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>5 Tips for Managing Glucose on a Budget</Text>
 
-          <ScrollView style={styles.articleContent}>
+          {/* Header with Close Button */}
+          <View style={styles.modalHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.modalTitle}>5 Tips for Managing Glucose on a Budget</Text>
+              <Text style={styles.readTimeText}>3 min read</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setArticleModalVisible(false)}
+              style={styles.closeIconButton}
+            >
+              <Ionicons name="close" size={28} color="#6B7280" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.articleContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.divider} />
+
             <Text style={styles.articleText}>
-              Managing diabetes doesn't have to be expensive. Here are five practical tips to help you maintain healthy glucose levels while staying within your budget:
+              Managing diabetes doesn't have to drain your wallet. Here are practical tips that work for your health and your budget.
             </Text>
 
-            <Text style={styles.articleSubheading}>1. Plan Your Meals</Text>
+            <Text style={styles.articleSubheading}>1. Buy Frozen Vegetables</Text>
             <Text style={styles.articleText}>
-              Planning meals ahead helps you buy only what you need and reduces impulse purchases. Make a weekly menu and shopping list before heading to the store.
+              Frozen veggies are just as nutritious as fresh—sometimes more, since they're frozen at peak ripeness. They're cheaper, last longer, and won't go bad before you use them. Stock up on broccoli, spinach, green beans, and cauliflower.
             </Text>
 
-            <Text style={styles.articleSubheading}>2. Buy Seasonal Produce</Text>
+            <Text style={styles.articleSubheading}>2. Protein on a Budget</Text>
             <Text style={styles.articleText}>
-              Seasonal fruits and vegetables are often more affordable and fresher. Visit local farmers markets for great deals on produce.
+              Skip expensive cuts of meat. Budget-friendly protein sources that won't spike your glucose:
+            </Text>
+            <Text style={styles.bulletPoint}>• Eggs (versatile and cheap)</Text>
+            <Text style={styles.bulletPoint}>• Canned tuna or salmon</Text>
+            <Text style={styles.bulletPoint}>• Dried beans and lentils</Text>
+            <Text style={styles.bulletPoint}>• Chicken thighs instead of breasts</Text>
+
+            <Text style={styles.articleSubheading}>3. Shop the Perimeter, But Be Strategic</Text>
+            <Text style={styles.articleText}>
+              The store's outer edges have fresh foods, but the inner aisles have budget staples. Smart picks: oats, brown rice, canned tomatoes, and nuts in bulk.
             </Text>
 
-            <Text style={styles.articleSubheading}>3. Choose Whole Grains</Text>
+            <Text style={styles.articleSubheading}>4. Plan Your Meals</Text>
             <Text style={styles.articleText}>
-              Whole grains like brown rice, oats, and whole wheat pasta are budget-friendly and help stabilize blood sugar levels.
+              Winging it costs more. Spend 10 minutes planning weekly meals around sale items. Cook once, eat twice—make extra for lunch the next day.
             </Text>
 
-            <Text style={styles.articleSubheading}>4. Cook at Home</Text>
+            <Text style={styles.articleSubheading}>5. Know Your Stores</Text>
+            <Text style={styles.bulletPoint}>• Aldi and Lidl: Up to 40% cheaper on basics</Text>
+            <Text style={styles.bulletPoint}>• Walmart: Good for staples</Text>
+            <Text style={styles.bulletPoint}>• Ethnic grocery stores: Often cheaper produce and spices</Text>
+            <Text style={styles.bulletPoint}>• Dollar stores: Surprisingly good for canned veggies and beans</Text>
+
+            <View style={styles.divider} />
+
+            <Text style={styles.bottomLineTitle}>The Bottom Line</Text>
             <Text style={styles.articleText}>
-              Preparing meals at home gives you control over portions and ingredients while saving money compared to eating out.
+              Eating well with diabetes is about smart choices, not expensive ones. Start with one tip this week and build from there.
             </Text>
 
-            <Text style={styles.articleSubheading}>5. Use Budget Meal Planning Tools</Text>
-            <Text style={styles.articleText}>
-              Take advantage of apps and tools that help you find affordable meal options based on your budget and dietary needs.
-            </Text>
-
+            <View style={styles.divider} />
             <View style={{ height: 20 }} />
           </ScrollView>
 
@@ -166,7 +194,7 @@ export default function CommunityScreen() {
             style={styles.closeButton}
             onPress={() => setArticleModalVisible(false)}
           >
-            <Text style={styles.closeButtonText}>Close</Text>
+            <Text style={styles.closeButtonText}>Back to Care Circle</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -334,14 +362,34 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 20,
   },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 20,
+    marginBottom: 4,
+    lineHeight: 28,
+  },
+  readTimeText: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    marginTop: 4,
+  },
+  closeIconButton: {
+    padding: 4,
+    marginLeft: 8,
   },
   articleContent: {
     flex: 1,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 20,
   },
   articleText: {
     fontSize: 15,
@@ -353,8 +401,21 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
     color: '#1F2937',
-    marginTop: 8,
+    marginTop: 16,
     marginBottom: 8,
+  },
+  bulletPoint: {
+    fontSize: 15,
+    color: '#374151',
+    lineHeight: 24,
+    marginBottom: 6,
+    marginLeft: 8,
+  },
+  bottomLineTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 12,
   },
   closeButton: {
     backgroundColor: '#374151',
