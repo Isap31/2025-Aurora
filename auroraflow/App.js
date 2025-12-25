@@ -41,8 +41,8 @@ function MainTabs() {
           else if (route.name === 'Goals') iconName = 'trophy';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#EC4899',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: '#374151',
+        tabBarInactiveTintColor: '#9CA3AF',
       })}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
@@ -82,7 +82,7 @@ export default function App() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#7B2CBF" />
+        <ActivityIndicator size="large" color="#374151" />
       </View>
     );
   }
