@@ -76,7 +76,8 @@ export default function DashboardScreen({ navigation }) {
   const [zipCode, setZipCode] = useState('');
   const [householdSize, setHouseholdSize] = useState('1');
   const [isLoadingMeals, setIsLoadingMeals] = useState(false);
-  const [showMealPlaceholder, setShowMealPlaceholder] = useState(false);
+  const [mealRecommendations, setMealRecommendations] = useState(null);
+  const [mealError, setMealError] = useState(null);
 
   // Daily affirmation state
   const [dailyAffirmation, setDailyAffirmation] = useState('');
@@ -270,13 +271,130 @@ export default function DashboardScreen({ navigation }) {
     }
 
     setIsLoadingMeals(true);
-    setShowMealPlaceholder(false);
+    setMealRecommendations(null);
+    setMealError(null);
 
-    // Simulate API call with brief loading
-    setTimeout(() => {
+    try {
+      // Fetch user's recent glucose average
+      let glucoseAverage = null;
+      try {
+        const glucoseResponse = await fetch('http://localhost:3000/api/glucose');
+        const glucoseData = await glucoseResponse.json();
+        const readingsArray = glucoseData.readings || glucoseData;
+
+        if (readingsArray.length > 0) {
+          const recentReadings = readingsArray.slice(0, 7); // Last 7 readings
+          const sum = recentReadings.reduce((acc, r) => acc + (r.glucose_level || 0), 0);
+          glucoseAverage = Math.round(sum / recentReadings.length);
+        }
+      } catch (error) {
+        console.log('Could not fetch glucose data, continuing without it');
+      }
+
+      // Build the prompt for Claude
+      const prompt = `You are a diabetes nutrition advisor. The user has a weekly food budget of $${weeklyBudget}${zipCode ? ` and lives in zip code ${zipCode}` : ''}. Their household size is ${householdSize} ${householdSize === '1' ? 'person' : 'people'}.${glucoseAverage ? ` Their recent glucose average is ${glucoseAverage} mg/dL.` : ''}
+
+Based on this information, suggest 5 affordable, diabetes-friendly meals. For each meal, provide:
+1. Meal name
+2. Estimated cost per serving
+3. Why it's good for glucose control (brief, 1 sentence)
+4. Best store to buy ingredients (Walmart, Aldi, Lidl, or ethnic grocery stores)
+
+Format your response EXACTLY like this example:
+
+MEAL 1: [Name]
+Cost: $[X.XX] per serving
+Good for glucose: [One sentence explanation]
+Where to shop: [Store name]
+
+MEAL 2: [Name]
+Cost: $[X.XX] per serving
+Good for glucose: [One sentence explanation]
+Where to shop: [Store name]
+
+Keep the total weekly cost under $${weeklyBudget}. Be specific and practical.`;
+
+      // Call Claude API
+      const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
+
+      if (!apiKey) {
+        throw new Error('API key not configured. Please add EXPO_PUBLIC_ANTHROPIC_API_KEY to your .env file');
+      }
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-5-sonnet-20241022',
+          max_tokens: 1024,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Failed to get meal recommendations');
+      }
+
+      const data = await response.json();
+      const claudeResponse = data.content[0].text;
+
+      // Parse the response into structured data
+      const meals = parseMealRecommendations(claudeResponse);
+
+      setMealRecommendations(meals);
+    } catch (error) {
+      console.error('Error getting meal recommendations:', error);
+      setMealError(error.message || 'Failed to get meal recommendations. Please try again.');
+    } finally {
       setIsLoadingMeals(false);
-      setShowMealPlaceholder(true);
-    }, 1500);
+    }
+  };
+
+  const parseMealRecommendations = (text) => {
+    const meals = [];
+    const mealBlocks = text.split(/MEAL \d+:/i).filter(block => block.trim());
+
+    mealBlocks.forEach((block, index) => {
+      const lines = block.trim().split('\n');
+      const meal = {
+        id: index + 1,
+        name: '',
+        cost: '',
+        reason: '',
+        store: '',
+      };
+
+      lines.forEach(line => {
+        const trimmedLine = line.trim();
+        if (trimmedLine.startsWith('Cost:')) {
+          meal.cost = trimmedLine.replace('Cost:', '').trim();
+        } else if (trimmedLine.startsWith('Good for glucose:')) {
+          meal.reason = trimmedLine.replace('Good for glucose:', '').trim();
+        } else if (trimmedLine.startsWith('Where to shop:')) {
+          meal.store = trimmedLine.replace('Where to shop:', '').trim();
+        } else if (!trimmedLine.startsWith('Cost:') && !trimmedLine.startsWith('Good for glucose:') && !trimmedLine.startsWith('Where to shop:') && trimmedLine.length > 0) {
+          if (!meal.name) {
+            meal.name = trimmedLine;
+          }
+        }
+      });
+
+      if (meal.name) {
+        meals.push(meal);
+      }
+    });
+
+    return meals;
   };
 
   const getGlucoseColor = (value) => {
@@ -943,7 +1061,7 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.modalHandle} />
           <Text style={styles.modalTitle}>Budget Meal Planner</Text>
 
-          {!showMealPlaceholder ? (
+          {!mealRecommendations && !mealError ? (
             <>
               <Text style={styles.modalLabel}>Weekly Food Budget</Text>
               <View style={styles.budgetInputContainer}>
@@ -1009,23 +1127,62 @@ export default function DashboardScreen({ navigation }) {
                 )}
               </TouchableOpacity>
             </>
-          ) : (
+          ) : mealError ? (
             <View style={styles.placeholderContainer}>
-              <Ionicons name="restaurant-outline" size={64} color="#6B7280" style={styles.placeholderIcon} />
-              <Text style={styles.placeholderTitle}>AI Meal Recommendations Coming Soon!</Text>
-              <Text style={styles.placeholderText}>
-                This feature will suggest affordable, diabetes-friendly meals based on your budget and location.
-              </Text>
+              <Ionicons name="alert-circle-outline" size={64} color="#374151" style={styles.placeholderIcon} />
+              <Text style={styles.placeholderTitle}>Oops!</Text>
+              <Text style={styles.placeholderText}>{mealError}</Text>
               <TouchableOpacity
                 style={styles.saveButtonPrimary}
                 onPress={() => {
-                  setShowMealPlaceholder(false);
+                  setMealError(null);
+                }}
+              >
+                <Text style={styles.saveButtonText}>Try Again</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <ScrollView style={styles.mealsScrollView} showsVerticalScrollIndicator={false}>
+              <Text style={styles.mealsHeader}>Your Personalized Meal Plan</Text>
+              <Text style={styles.mealsSubheader}>
+                Budget-friendly meals tailored for glucose control
+              </Text>
+
+              {mealRecommendations && mealRecommendations.map((meal) => (
+                <View key={meal.id} style={styles.mealCard}>
+                  <View style={styles.mealHeader}>
+                    <Text style={styles.mealNumber}>MEAL {meal.id}</Text>
+                    <Text style={styles.mealCost}>{meal.cost}</Text>
+                  </View>
+                  <Text style={styles.mealName}>{meal.name}</Text>
+                  <View style={styles.mealDetail}>
+                    <Ionicons name="nutrition-outline" size={16} color="#6B7280" />
+                    <Text style={styles.mealDetailText}>{meal.reason}</Text>
+                  </View>
+                  <View style={styles.mealDetail}>
+                    <Ionicons name="storefront-outline" size={16} color="#6B7280" />
+                    <Text style={styles.mealDetailText}>{meal.store}</Text>
+                  </View>
+                </View>
+              ))}
+
+              <View style={{ height: 20 }} />
+
+              <TouchableOpacity
+                style={styles.saveButtonPrimary}
+                onPress={() => {
+                  setMealRecommendations(null);
                   setBudgetMealsModalVisible(false);
+                  setWeeklyBudget('');
+                  setZipCode('');
+                  setHouseholdSize('1');
                 }}
               >
                 <Text style={styles.saveButtonText}>Close</Text>
               </TouchableOpacity>
-            </View>
+
+              <View style={{ height: 20 }} />
+            </ScrollView>
           )}
         </View>
       </Modal>
@@ -1810,5 +1967,65 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: 'center',
     marginBottom: 24,
+  },
+
+  // MEAL RECOMMENDATIONS STYLES
+  mealsScrollView: {
+    flex: 1,
+  },
+  mealsHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  mealsSubheader: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  mealCard: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  mealHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  mealNumber: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#6B7280',
+    letterSpacing: 0.5,
+  },
+  mealCost: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#374151',
+  },
+  mealName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  mealDetail: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  mealDetailText: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginLeft: 8,
+    flex: 1,
+    lineHeight: 18,
   },
 });
