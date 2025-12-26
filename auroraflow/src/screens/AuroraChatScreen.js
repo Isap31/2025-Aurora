@@ -1,232 +1,206 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
   ScrollView,
-  Alert,
+  KeyboardAvoidingView,
+  Platform,
   ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Audio } from 'expo-av';
 
 export default function AuroraChatScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const [isRecording, setIsRecording] = useState(false);
-  const [recording, setRecording] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState([]);
-  const [hasPermission, setHasPermission] = useState(false);
+  const scrollViewRef = useRef(null);
+  const [messages, setMessages] = useState([
+    {
+      id: '1',
+      text: 'Hi! I\'m Aurora, your diabetes care assistant. How can I help you today?',
+      sender: 'aurora',
+      timestamp: new Date(),
+    },
+  ]);
+  const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
-    checkMicrophonePermission();
-  }, []);
+    // Scroll to bottom when messages change
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, [messages]);
 
-  const checkMicrophonePermission = async () => {
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
+  const sendMessage = async () => {
+    if (!inputText.trim()) return;
 
-      if (status !== 'granted') {
-        Alert.alert(
-          'Microphone Permission Required',
-          'Aurora needs microphone access to chat with you. Please enable it in your device settings.',
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
-      console.error('Error checking microphone permission:', error);
-    }
+    // Add user message
+    const userMessage = {
+      id: Date.now().toString(),
+      text: inputText,
+      sender: 'user',
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputText('');
+    setIsTyping(true);
+
+    // Simulate AI response (replace with Claude API call)
+    setTimeout(() => {
+      const aiResponse = generateResponse(inputText);
+      const auroraMessage = {
+        id: (Date.now() + 1).toString(),
+        text: aiResponse,
+        sender: 'aurora',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, auroraMessage]);
+      setIsTyping(false);
+    }, 1000);
   };
 
-  const startRecording = async () => {
-    if (!hasPermission) {
-      Alert.alert('Permission Required', 'Please enable microphone access to use Aurora Chat.');
-      return;
-    }
+  const generateResponse = (userInput) => {
+    const input = userInput.toLowerCase();
 
-    try {
-      // Configure audio mode for recording
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-
-      setRecording(recording);
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      Alert.alert('Error', 'Failed to start recording. Please try again.');
-    }
-  };
-
-  const stopRecording = async () => {
-    if (!recording) return;
-
-    try {
-      setIsRecording(false);
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-      setRecording(null);
-
-      // Process the recording
-      await processAudioWithElevenLabs(uri);
-    } catch (error) {
-      console.error('Failed to stop recording:', error);
-      Alert.alert('Error', 'Failed to stop recording. Please try again.');
-    }
-  };
-
-  const processAudioWithElevenLabs = async (audioUri) => {
-    setIsProcessing(true);
-
-    try {
-      // PLACEHOLDER: This is where ElevenLabs API integration will go
-      // For now, we'll simulate a response
-
-      const apiKey = process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY;
-      const agentId = process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID;
-
-      if (!apiKey || !agentId) {
-        // Simulate a demo conversation for testing
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        const demoResponse = {
-          userMessage: 'Demo message (ElevenLabs API not configured)',
-          auroraResponse: 'Hi! I\'m Aurora, your diabetes support companion. Once configured, I can help you understand your glucose patterns, suggest meal ideas, and answer questions about diabetes management.',
-        };
-
-        setConversationHistory(prev => [...prev, demoResponse]);
-      } else {
-        // TODO: Implement actual ElevenLabs API call here
-        // Example structure:
-        // 1. Upload audio to ElevenLabs
-        // 2. Get transcription and agent response
-        // 3. Convert response to speech
-        // 4. Play audio response
-
-        Alert.alert(
-          'Not Implemented',
-          'ElevenLabs integration is ready but not yet implemented. Check the code for integration points.'
-        );
-      }
-    } catch (error) {
-      console.error('Error processing audio:', error);
-      Alert.alert('Error', 'Failed to process your message. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleMicrophonePress = async () => {
-    if (isRecording) {
-      await stopRecording();
+    // Simple response logic (replace with Claude API)
+    if (input.includes('glucose') || input.includes('blood sugar')) {
+      return 'Based on your recent readings, your glucose levels have been trending well. Keep logging your meals and monitoring regularly!';
+    } else if (input.includes('meal') || input.includes('food')) {
+      return 'Remember to count your carbs and log your meals. This helps me understand your patterns better. Would you like some meal suggestions?';
+    } else if (input.includes('exercise') || input.includes('workout')) {
+      return 'Exercise is great for glucose management! Make sure to check your levels before and after. Stay hydrated and carry fast-acting carbs.';
+    } else if (input.includes('help')) {
+      return 'I can help you with:\n• Understanding your glucose patterns\n• Meal and exercise recommendations\n• Answering diabetes management questions\n\nWhat would you like to know?';
     } else {
-      await startRecording();
+      return 'I\'m here to help with your diabetes management. Feel free to ask about your glucose readings, meals, exercise, or any diabetes-related questions!';
     }
+  };
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit'
+    });
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: 20 + insets.top }]}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Ionicons name="chevron-back" size={28} color="#374151" />
-        </TouchableOpacity>
+      <LinearGradient
+        colors={['#14B8A6', '#0D9488']}
+        style={[styles.header, { paddingTop: 20 + insets.top }]}
+      >
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Aurora Chat</Text>
-          <Text style={styles.headerSubtitle}>Your diabetes support companion</Text>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={28} color="white" />
+          </TouchableOpacity>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>Aurora Chat</Text>
+            <Text style={styles.headerSubtitle}>Your AI Care Assistant</Text>
+          </View>
+          <TouchableOpacity onPress={() => navigation.navigate('AuroraCall')}>
+            <Ionicons name="call" size={24} color="white" />
+          </TouchableOpacity>
         </View>
-      </View>
+      </LinearGradient>
 
-      {/* Conversation History */}
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {conversationHistory.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="chatbubbles-outline" size={64} color="#D1D5DB" />
-            <Text style={styles.emptyTitle}>Start a conversation</Text>
-            <Text style={styles.emptyText}>
-              Tap the microphone button below to chat with Aurora about your diabetes management
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.conversationContainer}>
-            {conversationHistory.map((item, index) => (
-              <View key={index} style={styles.conversationItem}>
-                {/* User Message */}
-                <View style={styles.userMessageContainer}>
-                  <View style={styles.userMessage}>
-                    <Text style={styles.userMessageText}>{item.userMessage}</Text>
-                  </View>
-                </View>
-
-                {/* Aurora Response */}
-                <View style={styles.auroraMessageContainer}>
-                  <View style={styles.auroraIconContainer}>
-                    <Ionicons name="sparkles" size={20} color="#14B8A6" />
-                  </View>
-                  <View style={styles.auroraMessage}>
-                    <Text style={styles.auroraMessageText}>{item.auroraResponse}</Text>
-                  </View>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {isProcessing && (
-          <View style={styles.processingContainer}>
-            <ActivityIndicator size="small" color="#14B8A6" />
-            <Text style={styles.processingText}>Aurora is thinking...</Text>
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Microphone Button */}
-      <View style={[styles.microphoneContainer, { paddingBottom: insets.bottom + 20 }]}>
-        {!hasPermission && (
-          <View style={styles.permissionWarning}>
-            <Ionicons name="warning-outline" size={16} color="#F59E0B" />
-            <Text style={styles.permissionWarningText}>
-              Microphone permission required
-            </Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={[
-            styles.microphoneButton,
-            isRecording && styles.microphoneButtonRecording,
-            !hasPermission && styles.microphoneButtonDisabled,
-          ]}
-          onPress={handleMicrophonePress}
-          disabled={isProcessing || !hasPermission}
+      <KeyboardAvoidingView
+        style={styles.chatContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.messagesContainer}
+          contentContainerStyle={styles.messagesContent}
+          showsVerticalScrollIndicator={false}
         >
-          {isProcessing ? (
-            <ActivityIndicator size="large" color="#FFFFFF" />
-          ) : (
-            <Ionicons
-              name={isRecording ? 'stop' : 'mic'}
-              size={48}
-              color="#FFFFFF"
-            />
-          )}
-        </TouchableOpacity>
+          {messages.map((message) => (
+            <View
+              key={message.id}
+              style={[
+                styles.messageBubble,
+                message.sender === 'user' ? styles.userBubble : styles.auroraBubble,
+              ]}
+            >
+              {message.sender === 'aurora' && (
+                <View style={styles.auroraAvatar}>
+                  <Ionicons name="star-outline" size={16} color="#14B8A6" />
+                </View>
+              )}
+              <View
+                style={[
+                  styles.bubbleContent,
+                  message.sender === 'user' ? styles.userBubbleContent : styles.auroraBubbleContent,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.messageText,
+                    message.sender === 'user' ? styles.userMessageText : styles.auroraMessageText,
+                  ]}
+                >
+                  {message.text}
+                </Text>
+                <Text
+                  style={[
+                    styles.messageTime,
+                    message.sender === 'user' ? styles.userMessageTime : styles.auroraMessageTime,
+                  ]}
+                >
+                  {formatTime(message.timestamp)}
+                </Text>
+              </View>
+            </View>
+          ))}
 
-        <Text style={styles.microphoneHint}>
-          {isRecording ? 'Tap to stop recording' : 'Tap to start talking'}
-        </Text>
-      </View>
+          {isTyping && (
+            <View style={[styles.messageBubble, styles.auroraBubble]}>
+              <View style={styles.auroraAvatar}>
+                <Ionicons name="star-outline" size={16} color="#14B8A6" />
+              </View>
+              <View style={styles.typingIndicator}>
+                <View style={styles.typingDot} />
+                <View style={styles.typingDot} />
+                <View style={styles.typingDot} />
+              </View>
+            </View>
+          )}
+
+          <View style={{ height: 20 }} />
+        </ScrollView>
+
+        <View style={styles.inputContainer}>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.input}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Type your message..."
+              placeholderTextColor="#9CA3AF"
+              multiline
+              maxLength={500}
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                !inputText.trim() && styles.sendButtonDisabled,
+              ]}
+              onPress={sendMessage}
+              disabled={!inputText.trim()}
+            >
+              <Ionicons
+                name="send"
+                size={20}
+                color={inputText.trim() ? '#FFFFFF' : '#9CA3AF'}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -237,165 +211,144 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
-    paddingBottom: 24,
-    backgroundColor: '#F9FAFB',
-  },
-  backButton: {
-    padding: 4,
-    marginRight: 12,
+    paddingTop: 50,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
   },
   headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTextContainer: {
     flex: 1,
+    marginLeft: 16,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#374151',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1F2937',
-    marginTop: 16,
-    marginBottom: 8,
+    color: 'white',
   },
-  emptyText: {
-    fontSize: 15,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 22,
+  headerSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.9)',
   },
-  conversationContainer: {
+  chatContainer: {
+    flex: 1,
+  },
+  messagesContainer: {
+    flex: 1,
+  },
+  messagesContent: {
     padding: 16,
   },
-  conversationItem: {
-    marginBottom: 24,
-  },
-  userMessageContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 12,
-  },
-  userMessage: {
-    backgroundColor: '#E5E7EB',
-    borderRadius: 16,
-    borderTopRightRadius: 4,
-    padding: 14,
+  messageBubble: {
+    flexDirection: 'row',
+    marginBottom: 16,
     maxWidth: '80%',
   },
-  userMessageText: {
-    fontSize: 15,
-    color: '#1F2937',
-    lineHeight: 20,
+  userBubble: {
+    alignSelf: 'flex-end',
+    flexDirection: 'row-reverse',
   },
-  auroraMessageContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+  auroraBubble: {
+    alignSelf: 'flex-start',
   },
-  auroraIconContainer: {
+  auroraAvatar: {
     width: 32,
     height: 32,
     borderRadius: 16,
     backgroundColor: '#D1FAE5',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 8,
   },
-  auroraMessage: {
-    backgroundColor: '#FFFFFF',
+  bubbleContent: {
     borderRadius: 16,
-    borderTopLeftRadius: 4,
-    padding: 14,
-    maxWidth: '75%',
+    padding: 12,
+  },
+  userBubbleContent: {
+    backgroundColor: '#14B8A6',
+    borderBottomRightRadius: 4,
+  },
+  auroraBubbleContent: {
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
   },
-  auroraMessageText: {
+  messageText: {
     fontSize: 15,
-    color: '#374151',
-    lineHeight: 22,
+    lineHeight: 20,
+    marginBottom: 4,
   },
-  processingContainer: {
+  userMessageText: {
+    color: '#FFFFFF',
+  },
+  auroraMessageText: {
+    color: '#1F2937',
+  },
+  messageTime: {
+    fontSize: 11,
+    marginTop: 4,
+  },
+  userMessageTime: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  auroraMessageTime: {
+    color: '#9CA3AF',
+  },
+  typingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 12,
+    gap: 4,
   },
-  processingText: {
-    fontSize: 14,
-    color: '#6B7280',
+  typingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#14B8A6',
+    opacity: 0.6,
   },
-  microphoneContainer: {
-    alignItems: 'center',
-    paddingTop: 20,
-    paddingBottom: 40,
+  inputContainer: {
+    padding: 16,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
   },
-  permissionWarning: {
+  inputWrapper: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FEF3C7',
+    alignItems: 'flex-end',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-    marginBottom: 16,
-    gap: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
-  permissionWarningText: {
-    fontSize: 13,
-    color: '#92400E',
-    fontWeight: '500',
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1F2937',
+    maxHeight: 100,
+    paddingVertical: 8,
   },
-  microphoneButton: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  sendButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#14B8A6',
-    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    justifyContent: 'center',
+    marginLeft: 8,
   },
-  microphoneButtonRecording: {
-    backgroundColor: '#EF4444',
-  },
-  microphoneButtonDisabled: {
-    backgroundColor: '#9CA3AF',
-    opacity: 0.5,
-  },
-  microphoneHint: {
-    marginTop: 16,
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
+  sendButtonDisabled: {
+    backgroundColor: '#E5E7EB',
   },
 });

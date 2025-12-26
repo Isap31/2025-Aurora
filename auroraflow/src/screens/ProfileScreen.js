@@ -40,7 +40,7 @@ export default function ProfileScreen({ navigation }) {
       <ScrollView>
         {/* Header with Profile Picture */}
         <LinearGradient
-          colors={['#8B5CF6', '#3B82F6']}
+          colors={['#14B8A6', '#0D9488']}
           style={[styles.header, { paddingTop: 40 + insets.top }]}
         >
           <TouchableOpacity
@@ -51,9 +51,9 @@ export default function ProfileScreen({ navigation }) {
           </TouchableOpacity>
 
           <View style={styles.profilePicture}>
-            <Text style={styles.profileInitials}>BT</Text>
+            <Text style={styles.profileInitials}>CP</Text>
           </View>
-          <Text style={styles.userName}>Bridget Thompson</Text>
+          <Text style={styles.userName}>Caitlin Przywara</Text>
           <View style={styles.diabetesBadge}>
             <Text style={styles.diabetesBadgeText}>Type 1 Diabetes</Text>
           </View>

@@ -187,7 +187,7 @@ export default function LogGlucoseScreen({ navigation }) {
         <Animated.View style={{ opacity: fadeAnim }}>
           {/* Header with Gradient */}
           <LinearGradient
-            colors={['#8B5CF6', '#7C3AED']}
+            colors={['#14B8A6', '#0D9488']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.header}
@@ -267,7 +267,7 @@ export default function LogGlucoseScreen({ navigation }) {
             <View style={styles.dateTimeRow}>
               <View style={styles.dateTimeItem}>
                 <View style={styles.dateTimeHeader}>
-                  <Ionicons name="calendar" size={20} color="#8B5CF6" />
+                  <Ionicons name="calendar" size={20} color="#14B8A6" />
                   <Text style={styles.dateTimeLabel}>Date</Text>
                 </View>
                 <TouchableOpacity
@@ -294,7 +294,7 @@ export default function LogGlucoseScreen({ navigation }) {
 
               <View style={styles.dateTimeItem}>
                 <View style={styles.dateTimeHeader}>
-                  <Ionicons name="time" size={20} color="#3B82F6" />
+                  <Ionicons name="time" size={20} color="#14B8A6" />
                   <Text style={styles.dateTimeLabel}>Time</Text>
                 </View>
                 <TouchableOpacity
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#8B5CF6',
+    shadowColor: '#14B8A6',
     shadowOffset: {
       width: 0,
       height: 4,

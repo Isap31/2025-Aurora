@@ -17,8 +17,8 @@ export const Colors = {
   
   // Accent
   accent: {
-    purple: "#8B5CF6",
-    purpleLight: "#F3E8FF",
+    teal: "#14B8A6",
+    tealLight: "#D1FAE5",
   },
   
   // Borders

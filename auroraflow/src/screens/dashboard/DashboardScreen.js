@@ -49,7 +49,7 @@ const getRandomAffirmation = () => {
 
 export default function DashboardScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const [userName] = useState('Bridget'); // Mock user name
+  const [userName] = useState('Caitlin'); // Mock user name
 
   // Real data from API
   const [latestGlucose, setLatestGlucose] = useState(null);
@@ -60,6 +60,14 @@ export default function DashboardScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [guestBannerDismissed, setGuestBannerDismissed] = useState(false);
+
+  // Today's Insights data
+  const [todayGlucoseCount, setTodayGlucoseCount] = useState(0);
+  const [todayGlucoseLatest, setTodayGlucoseLatest] = useState(null);
+  const [todayMealsCount, setTodayMealsCount] = useState(0);
+  const [todayTotalCarbs, setTodayTotalCarbs] = useState(0);
+  const [todayExerciseCount, setTodayExerciseCount] = useState(0);
+  const [todayExerciseDuration, setTodayExerciseDuration] = useState(0);
 
   // Modal visibility states
   const [logGlucoseModalVisible, setLogGlucoseModalVisible] = useState(false);
@@ -126,9 +134,59 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
+  const fetchTodayInsights = async () => {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
+    try {
+      // Fetch today's glucose readings
+      const glucoseResponse = await fetch('http://localhost:3000/api/glucose');
+      const glucoseData = await glucoseResponse.json();
+      if (Array.isArray(glucoseData)) {
+        const todayGlucose = glucoseData.filter(reading => {
+          const readingDate = new Date(reading.reading_time);
+          return readingDate >= startOfDay && readingDate <= endOfDay;
+        });
+        setTodayGlucoseCount(todayGlucose.length);
+        if (todayGlucose.length > 0) {
+          setTodayGlucoseLatest(todayGlucose[0].glucose_level);
+        }
+      }
+
+      // Fetch today's meals
+      const mealsResponse = await fetch('http://localhost:3000/api/meals');
+      const mealsData = await mealsResponse.json();
+      if (Array.isArray(mealsData)) {
+        const todayMeals = mealsData.filter(meal => {
+          const mealDate = new Date(meal.timestamp);
+          return mealDate >= startOfDay && mealDate <= endOfDay;
+        });
+        setTodayMealsCount(todayMeals.length);
+        const totalCarbs = todayMeals.reduce((sum, meal) => sum + (meal.carbohydrates || 0), 0);
+        setTodayTotalCarbs(totalCarbs);
+      }
+
+      // Fetch today's exercise
+      const exerciseResponse = await fetch('http://localhost:3000/api/exercises');
+      const exerciseData = await exerciseResponse.json();
+      if (Array.isArray(exerciseData)) {
+        const todayExercise = exerciseData.filter(exercise => {
+          const exerciseDate = new Date(exercise.timestamp);
+          return exerciseDate >= startOfDay && exerciseDate <= endOfDay;
+        });
+        setTodayExerciseCount(todayExercise.length);
+        const totalDuration = todayExercise.reduce((sum, exercise) => sum + (exercise.duration || 0), 0);
+        setTodayExerciseDuration(totalDuration);
+      }
+    } catch (error) {
+      console.error('Error fetching today\'s insights:', error);
+    }
+  };
+
   const loadDashboard = async () => {
     setLoading(true);
-    await Promise.all([fetchLatestGlucose(), fetchWeeklyStats()]);
+    await Promise.all([fetchLatestGlucose(), fetchWeeklyStats(), fetchTodayInsights()]);
     setLoading(false);
   };
 
@@ -450,7 +508,7 @@ Keep the total weekly cost under $${weeklyBudget}. Be specific and practical.`;
             </View>
             <View style={styles.headerRight}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('Aurora')}
+                onPress={() => navigation.navigate('AuroraCall')}
                 style={styles.callButton}
               >
                 <Ionicons name="call" size={22} color={Colors.text.header} />
@@ -529,7 +587,7 @@ Keep the total weekly cost under $${weeklyBudget}. Be specific and practical.`;
           </View>
 
           <View style={styles.statCard}>
-            <Ionicons name="checkmark-circle" size={32} color="#374151" />
+            <Ionicons name="checkmark-circle" size={32} color="#14B8A6" />
             <Text style={styles.statValue}>{timeInRange}%</Text>
             <Text style={styles.statLabel}>Time in</Text>
             <Text style={styles.statSubLabel}>Range</Text>
@@ -589,7 +647,7 @@ Keep the total weekly cost under $${weeklyBudget}. Be specific and practical.`;
 
           {/* Aurora Chat */}
           <Pressable
-            onPress={() => navigation.navigate('Aurora')}
+            onPress={() => navigation.navigate('AuroraChat')}
             style={({ pressed }) => [
               styles.quickActionButton,
               styles.auroraButton,
@@ -601,6 +659,42 @@ Keep the total weekly cost under $${weeklyBudget}. Be specific and practical.`;
               <Text style={[styles.quickActionLabel, styles.auroraButtonText]}>Aurora Chat</Text>
             </View>
           </Pressable>
+        </View>
+
+        {/* TODAY'S INSIGHTS SECTION */}
+        <View style={styles.insightsSection}>
+          <Text style={styles.sectionHeader}>Today's Insights</Text>
+          <View style={styles.insightsGrid}>
+            {/* Glucose Today */}
+            <View style={styles.insightCard}>
+              <Ionicons name="water-outline" size={28} color="#14B8A6" />
+              <Text style={styles.insightNumber}>{todayGlucoseCount}</Text>
+              <Text style={styles.insightLabel}>readings</Text>
+              {todayGlucoseLatest && (
+                <Text style={styles.insightDetail}>Last: {todayGlucoseLatest} mg/dL</Text>
+              )}
+            </View>
+
+            {/* Meals Today */}
+            <View style={styles.insightCard}>
+              <Ionicons name="restaurant-outline" size={28} color="#14B8A6" />
+              <Text style={styles.insightNumber}>{todayMealsCount}</Text>
+              <Text style={styles.insightLabel}>meals</Text>
+              {todayTotalCarbs > 0 && (
+                <Text style={styles.insightDetail}>~{todayTotalCarbs}g carbs</Text>
+              )}
+            </View>
+
+            {/* Exercise Today */}
+            <View style={styles.insightCard}>
+              <Ionicons name="fitness-outline" size={28} color="#14B8A6" />
+              <Text style={styles.insightNumber}>{todayExerciseCount}</Text>
+              <Text style={styles.insightLabel}>workouts</Text>
+              {todayExerciseDuration > 0 && (
+                <Text style={styles.insightDetail}>{todayExerciseDuration} min total</Text>
+              )}
+            </View>
+          </View>
         </View>
 
         {/* BUDGET-FRIENDLY MEALS SECTION */}
@@ -1463,7 +1557,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   comingSoonBadge: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#14B8A6',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
@@ -1476,12 +1570,12 @@ const styles = StyleSheet.create({
   auroraTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#7C3AED',
+    color: '#14B8A6',
     marginBottom: 4,
   },
   auroraSubtitle: {
     fontSize: 13,
-    color: '#8B5CF6',
+    color: '#14B8A6',
     lineHeight: 18,
   },
 
@@ -1769,7 +1863,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#14B8A6',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -2040,5 +2134,48 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
     lineHeight: 18,
+  },
+
+  // TODAY'S INSIGHTS STYLES
+  insightsSection: {
+    marginHorizontal: 16,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  insightsGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  insightCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    minHeight: 115,
+    justifyContent: 'center',
+  },
+  insightNumber: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginTop: 8,
+    marginBottom: 2,
+  },
+  insightLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginBottom: 6,
+  },
+  insightDetail: {
+    fontSize: 11,
+    color: '#14B8A6',
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

@@ -97,7 +97,7 @@ export default function LogExerciseScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#3B82F6', '#60A5FA']} style={[styles.header, { paddingTop: 20 + insets.top }]}>
+      <LinearGradient colors={['#14B8A6', '#0D9488']} style={[styles.header, { paddingTop: 20 + insets.top }]}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={28} color="white" />
@@ -207,7 +207,7 @@ export default function LogExerciseScreen({ navigation }) {
 
         <View style={styles.tipsCard}>
           <View style={styles.tipsHeader}>
-            <Ionicons name="bulb" size={20} color="#3B82F6" />
+            <Ionicons name="bulb" size={20} color="#14B8A6" />
             <Text style={styles.tipsTitle}>Exercise Tips</Text>
           </View>
           <Text style={styles.tipsText}>
@@ -355,8 +355,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   intensityButtonActive: {
-    borderColor: '#3B82F6',
-    backgroundColor: '#EFF6FF',
+    borderColor: '#14B8A6',
+    backgroundColor: '#D1FAE5',
   },
   intensityIcon: {
     fontSize: 24,
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   intensityLabelActive: {
-    color: '#3B82F6',
+    color: '#14B8A6',
   },
   impactCard: {
     backgroundColor: 'white',
@@ -423,13 +423,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   tipsCard: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#D1FAE5',
     marginHorizontal: 16,
     marginTop: 16,
     padding: 16,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#3B82F6',
+    borderLeftColor: '#14B8A6',
   },
   tipsHeader: {
     flexDirection: 'row',
@@ -439,12 +439,12 @@ const styles = StyleSheet.create({
   tipsTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#1E40AF',
+    color: '#065F46',
     marginLeft: 8,
   },
   tipsText: {
     fontSize: 13,
-    color: '#1E40AF',
+    color: '#065F46',
     lineHeight: 22,
   },
   input: {

@@ -186,7 +186,7 @@ export default function HistoryScreen({ navigation }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
+        <ActivityIndicator size="large" color="#14B8A6" />
         <Text style={styles.loadingText}>Loading your readings...</Text>
       </View>
     );
@@ -196,7 +196,7 @@ export default function HistoryScreen({ navigation }) {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={['#8B5CF6', '#3B82F6']}
+          colors={['#14B8A6', '#0D9488']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.header}
@@ -212,7 +212,7 @@ export default function HistoryScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#8B5CF6', '#3B82F6']}
+        colors={['#14B8A6', '#0D9488']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.header}
@@ -230,8 +230,8 @@ export default function HistoryScreen({ navigation }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#8B5CF6"
-            colors={['#8B5CF6']}
+            tintColor="#14B8A6"
+            colors={['#14B8A6']}
           />
         }
       >
@@ -239,7 +239,7 @@ export default function HistoryScreen({ navigation }) {
         {todayReadings.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Ionicons name="sunny" size={24} color="#8B5CF6" />
+              <Ionicons name="sunny" size={24} color="#14B8A6" />
               <Text style={styles.sectionTitle}>Today</Text>
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{todayReadings.length}</Text>
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   badge: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#14B8A6',
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -432,12 +432,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   addButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#14B8A6',
     paddingHorizontal: 40,
     paddingVertical: 16,
     borderRadius: 30,
     elevation: 4,
-    shadowColor: '#8B5CF6',
+    shadowColor: '#14B8A6',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

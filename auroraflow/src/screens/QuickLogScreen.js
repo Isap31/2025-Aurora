@@ -15,14 +15,14 @@ export default function QuickLogScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#8B5CF6', '#3B82F6']} style={[styles.header, { paddingTop: 20 + insets.top }]}>
+      <LinearGradient colors={['#14B8A6', '#0D9488']} style={[styles.header, { paddingTop: 20 + insets.top }]}>
         <Text style={styles.headerTitle}>Quick Log</Text>
         <Text style={styles.headerSubtitle}>What would you like to track?</Text>
       </LinearGradient>
 
       <View style={styles.content}>
         <TouchableOpacity
-          style={[styles.logCard, { backgroundColor: '#7C3AED' }]}
+          style={[styles.logCard, { backgroundColor: '#14B8A6' }]}
           onPress={() => navigation.navigate('Dashboard')}
         >
           <Text style={styles.logIcon}>💉</Text>
@@ -31,7 +31,7 @@ export default function QuickLogScreen({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.logCard, { backgroundColor: '#F97316' }]}
+          style={[styles.logCard, { backgroundColor: '#14B8A6' }]}
           onPress={() => navigation.navigate('LogMeal')}
         >
           <Text style={styles.logIcon}>🍽️</Text>
@@ -40,7 +40,7 @@ export default function QuickLogScreen({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.logCard, { backgroundColor: '#3B82F6' }]}
+          style={[styles.logCard, { backgroundColor: '#14B8A6' }]}
           onPress={() => navigation.navigate('LogExercise')}
         >
           <Text style={styles.logIcon}>💪</Text>
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   tipCard: {
-    backgroundColor: '#EDE9FE',
+    backgroundColor: '#D1FAE5',
     padding: spacing.md,
     borderRadius: 12,
     flexDirection: 'row',
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   tipText: {
     flex: 1,
     fontSize: 13,
-    color: '#5B21B6',
+    color: '#065F46',
     lineHeight: 18,
   },
 });

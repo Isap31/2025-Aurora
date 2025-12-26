@@ -17,7 +17,8 @@ import HealthQuestScreen from './src/screens/HealthQuestScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import LogMealScreen from './src/screens/LogMealScreen';
 import LogExerciseScreen from './src/screens/LogExerciseScreen';
-import AuroraScreen from './src/screens/AuroraScreen';
+import AuroraChatScreen from './src/screens/AuroraChatScreen';
+import AuroraCallScreen from './src/screens/AuroraCallScreen';
 import CommunityScreen from './src/screens/CommunityScreen';
 
 // Import auth service
@@ -118,8 +119,16 @@ export default function App() {
               }}
             />
             <Stack.Screen
-              name="Aurora"
-              component={AuroraScreen}
+              name="AuroraChat"
+              component={AuroraChatScreen}
+              options={{
+                headerShown: false,
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen
+              name="AuroraCall"
+              component={AuroraCallScreen}
               options={{
                 headerShown: false,
                 presentation: 'card',

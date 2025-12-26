@@ -93,7 +93,7 @@ export default function LogMealScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#F97316', '#FB923C']} style={[styles.header, { paddingTop: 20 + insets.top }]}>
+      <LinearGradient colors={['#14B8A6', '#0D9488']} style={[styles.header, { paddingTop: 20 + insets.top }]}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={28} color="white" />
