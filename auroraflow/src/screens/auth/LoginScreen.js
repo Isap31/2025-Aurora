@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#7B2CBF',
+    color: '#14B8A6',
     textAlign: 'center',
     marginBottom: 8,
   },
@@ -187,14 +187,14 @@ const styles = StyleSheet.create({
     borderColor: '#DDD',
   },
   button: {
-    backgroundColor: '#7B2CBF',
+    backgroundColor: '#14B8A6',
     borderRadius: 10,
     padding: 15,
     alignItems: 'center',
     marginTop: 10,
   },
   buttonDisabled: {
-    backgroundColor: '#B19CD9',
+    backgroundColor: '#7DD3C0',
   },
   buttonText: {
     color: '#FFF',
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   signupLink: {
-    color: '#7B2CBF',
+    color: '#14B8A6',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -249,10 +249,10 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#7B2CBF',
+    borderColor: '#14B8A6',
   },
   guestButtonText: {
-    color: '#7B2CBF',
+    color: '#14B8A6',
     fontSize: 18,
     fontWeight: 'bold',
   },

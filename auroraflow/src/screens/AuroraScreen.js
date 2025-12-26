@@ -123,6 +123,11 @@ export default function AuroraScreen({ navigation }) {
     const apiKey = process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY;
     const agentId = process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID;
 
+    console.log('API Key present:', !!apiKey);
+    console.log('Agent ID present:', !!agentId);
+    console.log('API Key (first 10 chars):', apiKey?.substring(0, 10));
+    console.log('Agent ID:', agentId);
+
     if (!apiKey || !agentId) {
       Alert.alert(
         'Configuration Required',
@@ -172,27 +177,38 @@ export default function AuroraScreen({ navigation }) {
   };
 
   const getSignedUrl = async (apiKey, agentId) => {
-    // ElevenLabs Conversational AI requires a signed URL
-    // We'll use the standard WebSocket endpoint with auth
-    const response = await fetch('https://api.elevenlabs.io/v1/convai/conversation/get_signed_url', {
-      method: 'POST',
-      headers: {
-        'xi-api-key': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        agent_id: agentId,
-        system_prompt: getSystemPrompt(),
-      }),
-    });
+    try {
+      console.log('Requesting signed URL from ElevenLabs...');
+      console.log('Agent ID:', agentId);
 
-    if (!response.ok) {
-      throw new Error('Failed to get signed URL');
+      const response = await fetch('https://api.elevenlabs.io/v1/convai/conversation/get_signed_url', {
+        method: 'GET',
+        headers: {
+          'xi-api-key': apiKey,
+        },
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('ElevenLabs API error:', errorText);
+        throw new Error(`Failed to get signed URL: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Received signed URL successfully');
+      conversationIdRef.current = data.conversation_id;
+
+      // Add agent_id and custom prompt as query parameters
+      const url = new URL(data.signed_url);
+      url.searchParams.append('agent_id', agentId);
+
+      return url.toString();
+    } catch (error) {
+      console.error('Error in getSignedUrl:', error);
+      throw error;
     }
-
-    const data = await response.json();
-    conversationIdRef.current = data.conversation_id;
-    return data.signed_url;
   };
 
   const startAudioRecording = async () => {
@@ -411,7 +427,7 @@ export default function AuroraScreen({ navigation }) {
                 {/* Aurora Response */}
                 <View style={styles.auroraMessageContainer}>
                   <View style={styles.auroraIconContainer}>
-                    <Ionicons name="sparkles" size={20} color="#14B8A6" />
+                    <Ionicons name="star-outline" size={20} color="#14B8A6" />
                   </View>
                   <View style={styles.auroraMessage}>
                     <Text style={styles.auroraMessageText}>{item.auroraResponse}</Text>
