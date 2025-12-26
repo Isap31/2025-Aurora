@@ -74,7 +74,7 @@ export default function HistoryScreen() {
   };
 
   const getGlucoseColor = (value) => {
-    if (value >= 70 && value <= 180) return '#374151';
+    if (value >= 70 && value <= 180) return '#14B8A6';
     if (value >= 55 && value < 70) return '#6B7280';
     if (value > 180 && value <= 250) return '#6B7280';
     return '#374151';
@@ -139,7 +139,7 @@ export default function HistoryScreen() {
           <Text style={styles.headerTitle}>History</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#374151" />
+          <ActivityIndicator size="large" color="#14B8A6" />
           <Text style={styles.loadingText}>Loading your readings...</Text>
         </View>
       </SafeAreaView>
@@ -176,8 +176,8 @@ export default function HistoryScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#374151']}
-            tintColor="#374151"
+            colors={['#14B8A6']}
+            tintColor="#14B8A6"
           />
         }
       >

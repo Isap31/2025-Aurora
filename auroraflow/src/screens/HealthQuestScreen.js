@@ -32,38 +32,38 @@ export default function HealthQuestScreen() {
         {/* Logging Streak */}
         <View style={styles.card}>
           <View style={styles.goalHeader}>
-            <Ionicons name="flame-outline" size={24} color="#374151" />
+            <Ionicons name="flame-outline" size={24} color="#14B8A6" />
             <Text style={styles.cardTitle}>Logging Streak</Text>
           </View>
           <Text style={styles.streakText}>{currentStreak} days</Text>
           <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: '100%', backgroundColor: '#374151' }]} />
+            <View style={[styles.progressBar, { width: '100%', backgroundColor: '#14B8A6' }]} />
           </View>
         </View>
 
         {/* Daily Goal */}
         <View style={styles.card}>
           <View style={styles.goalHeader}>
-            <Ionicons name="today-outline" size={24} color="#374151" />
+            <Ionicons name="today-outline" size={24} color="#14B8A6" />
             <Text style={styles.cardTitle}>Today's Logs</Text>
           </View>
           <Text style={styles.goalProgress}>{dailyLogs}/{dailyGoal}</Text>
           <Text style={styles.goalLabel}>Daily glucose logs</Text>
           <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(dailyLogs / dailyGoal) * 100}%`, backgroundColor: '#374151' }]} />
+            <View style={[styles.progressBar, { width: `${(dailyLogs / dailyGoal) * 100}%`, backgroundColor: '#14B8A6' }]} />
           </View>
         </View>
 
         {/* Weekly Goal */}
         <View style={styles.card}>
           <View style={styles.goalHeader}>
-            <Ionicons name="calendar-outline" size={24} color="#374151" />
+            <Ionicons name="calendar-outline" size={24} color="#14B8A6" />
             <Text style={styles.cardTitle}>This Week</Text>
           </View>
           <Text style={styles.goalProgress}>{weeklyCheckins}/{weeklyGoal}</Text>
           <Text style={styles.goalLabel}>Weekly check-ins</Text>
           <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: `${(weeklyCheckins / weeklyGoal) * 100}%`, backgroundColor: '#374151' }]} />
+            <View style={[styles.progressBar, { width: `${(weeklyCheckins / weeklyGoal) * 100}%`, backgroundColor: '#14B8A6' }]} />
           </View>
         </View>
 

@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Audio } from 'expo-av';
 
-export default function AuroraScreen({ navigation }) {
+export default function AuroraChatScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [isRecording, setIsRecording] = useState(false);
   const [recording, setRecording] = useState(null);

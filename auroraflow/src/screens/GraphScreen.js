@@ -76,7 +76,7 @@ export default function GraphScreen() {
       datasets: [
         {
           data: data,
-          color: (opacity = 1) => `rgba(139, 92, 246, ${opacity})`,
+          color: (opacity = 1) => `rgba(20, 184, 166, ${opacity})`,
           strokeWidth: 3,
         },
       ],
@@ -108,7 +108,7 @@ export default function GraphScreen() {
           <Text style={styles.headerTitle}>Trends</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#374151" />
+          <ActivityIndicator size="large" color="#14B8A6" />
           <Text style={styles.loadingText}>Loading trends...</Text>
         </View>
       </SafeAreaView>
@@ -169,7 +169,7 @@ export default function GraphScreen() {
                 backgroundGradientFrom: '#ffffff',
                 backgroundGradientTo: '#ffffff',
                 decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(139, 92, 246, ${opacity})`,
+                color: (opacity = 1) => `rgba(20, 184, 166, ${opacity})`,
                 labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
                 style: {
                   borderRadius: 16,
@@ -177,7 +177,7 @@ export default function GraphScreen() {
                 propsForDots: {
                   r: '4',
                   strokeWidth: '2',
-                  stroke: '#374151',
+                  stroke: '#14B8A6',
                 },
               }}
               bezier
@@ -216,7 +216,7 @@ export default function GraphScreen() {
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statLabel}>Time in Range</Text>
-                <Text style={[styles.statValue, { color: stats.inRange >= 70 ? '#6B7280' : '#6B7280' }]}>
+                <Text style={[styles.statValue, { color: stats.inRange >= 70 ? '#14B8A6' : '#1F2937' }]}>
                   {stats.inRange}%
                 </Text>
                 <Text style={styles.statUnit}>70-180 mg/dL</Text>
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
   },
   periodTextActive: {
-    color: '#374151',
+    color: '#14B8A6',
   },
   chartContainer: {
     marginHorizontal: 16,
