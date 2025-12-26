@@ -1866,7 +1866,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   guestBannerButton: {
-    backgroundColor: '#374151',
+    backgroundColor: '#14B8A6',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,

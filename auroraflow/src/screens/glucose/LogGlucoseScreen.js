@@ -348,7 +348,7 @@ export default function LogGlucoseScreen({ navigation }) {
                 colors={
                   loading || !value
                     ? ['#D1D5DB', '#9CA3AF']
-                    : ['#8B5CF6', '#7C3AED']
+                    : ['#14B8A6', '#0D9488']
                 }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}

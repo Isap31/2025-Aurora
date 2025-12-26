@@ -181,7 +181,13 @@ export default function AuroraScreen({ navigation }) {
       console.log('Requesting signed URL from ElevenLabs...');
       console.log('Agent ID:', agentId);
 
-      const response = await fetch('https://api.elevenlabs.io/v1/convai/conversation/get_signed_url', {
+      // Build URL with agent_id as query parameter
+      const url = new URL('https://api.elevenlabs.io/v1/convai/conversation/get_signed_url');
+      url.searchParams.append('agent_id', agentId);
+
+      console.log('Request URL:', url.toString());
+
+      const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
           'xi-api-key': apiKey,
@@ -198,13 +204,10 @@ export default function AuroraScreen({ navigation }) {
 
       const data = await response.json();
       console.log('Received signed URL successfully');
+      console.log('Conversation ID:', data.conversation_id);
       conversationIdRef.current = data.conversation_id;
 
-      // Add agent_id and custom prompt as query parameters
-      const url = new URL(data.signed_url);
-      url.searchParams.append('agent_id', agentId);
-
-      return url.toString();
+      return data.signed_url;
     } catch (error) {
       console.error('Error in getSignedUrl:', error);
       throw error;
