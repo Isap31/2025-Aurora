@@ -41,7 +41,7 @@ function MainTabs() {
           else if (route.name === 'Goals') iconName = 'trophy';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#374151',
+        tabBarActiveTintColor: '#14B8A6',
         tabBarInactiveTintColor: '#9CA3AF',
       })}
     >
@@ -82,7 +82,7 @@ export default function App() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#374151" />
+        <ActivityIndicator size="large" color="#14B8A6" />
       </View>
     );
   }

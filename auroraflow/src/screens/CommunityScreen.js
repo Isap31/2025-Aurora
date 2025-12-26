@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   notifyButton: {
-    backgroundColor: '#374151',
+    backgroundColor: '#14B8A6',
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 12,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   closeButton: {
-    backgroundColor: '#374151',
+    backgroundColor: '#14B8A6',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

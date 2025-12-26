@@ -511,7 +511,10 @@ Keep the total weekly cost under $${weeklyBudget}. Be specific and practical.`;
             {latestGlucose?.glucose_level || '--'} <Text style={styles.glucoseCardUnit}>mg/dL</Text>
           </Text>
           <Text style={styles.glucoseTimestamp}>{formatTimestamp(latestGlucose?.reading_time)}</Text>
-          <Text style={styles.glucoseStatus}>
+          <Text style={[
+            styles.glucoseStatus,
+            latestGlucose?.glucose_level >= 70 && latestGlucose?.glucose_level <= 180 && styles.glucoseStatusInRange
+          ]}>
             {getGlucoseStatus(latestGlucose?.glucose_level)}
           </Text>
         </View>
@@ -589,12 +592,13 @@ Keep the total weekly cost under $${weeklyBudget}. Be specific and practical.`;
             onPress={() => navigation.navigate('Aurora')}
             style={({ pressed }) => [
               styles.quickActionButton,
+              styles.auroraButton,
               pressed && styles.quickActionPressed
             ]}
           >
             <View style={styles.quickActionContent}>
-              <Ionicons name="chatbubble-outline" size={32} color={Colors.text.header} />
-              <Text style={styles.quickActionLabel}>Aurora Chat</Text>
+              <Ionicons name="chatbubble-outline" size={32} color="#FFFFFF" />
+              <Text style={[styles.quickActionLabel, styles.auroraButtonText]}>Aurora Chat</Text>
             </View>
           </Pressable>
         </View>
@@ -1315,6 +1319,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6B7280',
   },
+  glucoseStatusInRange: {
+    color: '#14B8A6',
+  },
 
   // 4. WEEKLY STATS ROW STYLES
   statsRow: {
@@ -1395,6 +1402,12 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     textAlign: 'center',
     marginTop: 8,
+  },
+  auroraButton: {
+    backgroundColor: '#14B8A6',
+  },
+  auroraButtonText: {
+    color: '#FFFFFF',
   },
 
   // 6. TODAY'S INSIGHT STYLES
@@ -1591,7 +1604,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    backgroundColor: '#374151',
+    backgroundColor: '#14B8A6',
   },
   saveButtonText: {
     fontSize: 16,
