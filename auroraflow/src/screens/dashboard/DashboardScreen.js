@@ -584,7 +584,7 @@ Keep the total weekly cost under $${weeklyBudget}. Be specific and practical.`;
             </View>
           </Pressable>
 
-          {/* Call Aurora */}
+          {/* Aurora Chat */}
           <Pressable
             onPress={() => navigation.navigate('Aurora')}
             style={({ pressed }) => [
@@ -593,8 +593,8 @@ Keep the total weekly cost under $${weeklyBudget}. Be specific and practical.`;
             ]}
           >
             <View style={styles.quickActionContent}>
-              <Ionicons name="call-outline" size={32} color={Colors.text.header} />
-              <Text style={styles.quickActionLabel}>Call Aurora</Text>
+              <Ionicons name="chatbubble-outline" size={32} color={Colors.text.header} />
+              <Text style={styles.quickActionLabel}>Aurora Chat</Text>
             </View>
           </Pressable>
         </View>
