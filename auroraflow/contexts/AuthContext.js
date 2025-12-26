@@ -32,6 +32,25 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // DEV MODE: Bypass authentication
+    const DEV_MODE = true;
+
+    if (DEV_MODE) {
+      console.log('🔓 DEV MODE: Bypassing authentication');
+      setUser({
+        uid: 'dev-user',
+        email: 'caitlin@auroraflow.com'
+      });
+      setUserProfile({
+        id: 'dev-user',
+        email: 'caitlin@auroraflow.com',
+        name: 'Caitlin',
+        preferences: DEFAULT_PREFERENCES
+      });
+      setLoading(false);
+      return () => {}; // Return empty cleanup function
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
