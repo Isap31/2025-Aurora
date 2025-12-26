@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,15 +16,78 @@ import { Audio } from 'expo-av';
 
 export default function AuroraScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const [isRecording, setIsRecording] = useState(false);
-  const [recording, setRecording] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [conversationState, setConversationState] = useState('idle'); // idle, listening, processing, speaking
   const [conversationHistory, setConversationHistory] = useState([]);
   const [hasPermission, setHasPermission] = useState(false);
+  const [currentTranscript, setCurrentTranscript] = useState('');
+  const [userGlucoseContext, setUserGlucoseContext] = useState(null);
+
+  const wsRef = useRef(null);
+  const recordingRef = useRef(null);
+  const soundRef = useRef(null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const conversationIdRef = useRef(null);
 
   useEffect(() => {
     checkMicrophonePermission();
+    fetchUserGlucoseContext();
+
+    return () => {
+      // Cleanup on unmount
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      if (recordingRef.current) {
+        recordingRef.current.stopAndUnloadAsync();
+      }
+      if (soundRef.current) {
+        soundRef.current.unloadAsync();
+      }
+    };
   }, []);
+
+  useEffect(() => {
+    if (conversationState === 'listening') {
+      // Start pulsing animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [conversationState]);
+
+  const fetchUserGlucoseContext = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/glucose/recent');
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        const recentReadings = data.slice(0, 7);
+        const sum = recentReadings.reduce((acc, r) => acc + (r.glucose_level || 0), 0);
+        const average = Math.round(sum / recentReadings.length);
+
+        setUserGlucoseContext({
+          latestGlucose: data[0].glucose_level,
+          averageGlucose: average,
+          readingCount: recentReadings.length,
+        });
+      }
+    } catch (error) {
+      console.log('Could not fetch glucose context:', error);
+    }
+  };
 
   const checkMicrophonePermission = async () => {
     try {
@@ -42,95 +106,260 @@ export default function AuroraScreen({ navigation }) {
     }
   };
 
-  const startRecording = async () => {
+  const getSystemPrompt = () => {
+    const glucoseContext = userGlucoseContext
+      ? `The user's recent 7-day glucose average is ${userGlucoseContext.averageGlucose} mg/dL, with their most recent reading at ${userGlucoseContext.latestGlucose} mg/dL.`
+      : 'The user is tracking their diabetes but glucose data is not currently available.';
+
+    return `You are Aurora, a friendly and knowledgeable diabetes support companion. You help users understand their glucose patterns, suggest affordable meal ideas, and answer questions about diabetes management. Keep responses concise and supportive (2-3 sentences max). ${glucoseContext} Be warm but informative.`;
+  };
+
+  const startConversation = async () => {
     if (!hasPermission) {
       Alert.alert('Permission Required', 'Please enable microphone access to use Aurora Chat.');
       return;
     }
 
+    const apiKey = process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY;
+    const agentId = process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID;
+
+    if (!apiKey || !agentId) {
+      Alert.alert(
+        'Configuration Required',
+        'ElevenLabs API credentials are not configured. Please add them to your .env file and restart the app.'
+      );
+      return;
+    }
+
     try {
-      // Configure audio mode for recording
+      setConversationState('listening');
+
+      // Set up WebSocket connection to ElevenLabs Conversational AI
+      const signedUrl = await getSignedUrl(apiKey, agentId);
+
+      wsRef.current = new WebSocket(signedUrl);
+
+      wsRef.current.onopen = () => {
+        console.log('WebSocket connected');
+        startAudioRecording();
+      };
+
+      wsRef.current.onmessage = async (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          await handleWebSocketMessage(message);
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      wsRef.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setConversationState('idle');
+        Alert.alert('Connection Error', 'Failed to connect to Aurora. Please try again.');
+      };
+
+      wsRef.current.onclose = () => {
+        console.log('WebSocket closed');
+        setConversationState('idle');
+      };
+
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      setConversationState('idle');
+      Alert.alert('Error', 'Failed to start conversation. Please try again.');
+    }
+  };
+
+  const getSignedUrl = async (apiKey, agentId) => {
+    // ElevenLabs Conversational AI requires a signed URL
+    // We'll use the standard WebSocket endpoint with auth
+    const response = await fetch('https://api.elevenlabs.io/v1/convai/conversation/get_signed_url', {
+      method: 'POST',
+      headers: {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        agent_id: agentId,
+        system_prompt: getSystemPrompt(),
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get signed URL');
+    }
+
+    const data = await response.json();
+    conversationIdRef.current = data.conversation_id;
+    return data.signed_url;
+  };
+
+  const startAudioRecording = async () => {
+    try {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
       });
 
       const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
+        {
+          ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+          android: {
+            ...Audio.RecordingOptionsPresets.HIGH_QUALITY.android,
+            sampleRate: 16000,
+            numberOfChannels: 1,
+          },
+          ios: {
+            ...Audio.RecordingOptionsPresets.HIGH_QUALITY.ios,
+            sampleRate: 16000,
+            numberOfChannels: 1,
+          },
+        },
+        (status) => {
+          // Stream audio chunks to WebSocket
+          if (status.isRecording && wsRef.current?.readyState === WebSocket.OPEN) {
+            // Note: Direct streaming requires additional setup
+            // For now, we'll send audio in chunks
+          }
+        }
       );
 
-      setRecording(recording);
-      setIsRecording(true);
+      recordingRef.current = recording;
     } catch (error) {
-      console.error('Failed to start recording:', error);
-      Alert.alert('Error', 'Failed to start recording. Please try again.');
+      console.error('Error starting recording:', error);
+      setConversationState('idle');
     }
   };
 
-  const stopRecording = async () => {
-    if (!recording) return;
+  const handleWebSocketMessage = async (message) => {
+    switch (message.type) {
+      case 'conversation_initiation_metadata':
+        console.log('Conversation initiated:', message.conversation_id);
+        break;
 
-    try {
-      setIsRecording(false);
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-      setRecording(null);
+      case 'audio':
+        // Received audio response from Aurora
+        setConversationState('speaking');
+        await playAudioResponse(message.audio_event.audio_base_64);
+        break;
 
-      // Process the recording
-      await processAudioWithElevenLabs(uri);
-    } catch (error) {
-      console.error('Failed to stop recording:', error);
-      Alert.alert('Error', 'Failed to stop recording. Please try again.');
+      case 'user_transcript':
+        // User's speech was transcribed
+        setCurrentTranscript(message.user_transcription_event.user_transcript);
+        break;
+
+      case 'agent_response':
+        // Aurora's text response
+        const userMessage = currentTranscript || 'Voice message';
+        const auroraResponse = message.agent_response_event.agent_response;
+
+        setConversationHistory(prev => [...prev, {
+          userMessage,
+          auroraResponse,
+          timestamp: new Date(),
+        }]);
+        setCurrentTranscript('');
+        setConversationState('processing');
+        break;
+
+      case 'interruption':
+        // User interrupted Aurora
+        console.log('Conversation interrupted');
+        break;
+
+      case 'ping':
+        // Keepalive ping
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'pong', event_id: message.ping_event.event_id }));
+        }
+        break;
+
+      default:
+        console.log('Unknown message type:', message.type);
     }
   };
 
-  const processAudioWithElevenLabs = async (audioUri) => {
-    setIsProcessing(true);
-
+  const playAudioResponse = async (audioBase64) => {
     try {
-      // PLACEHOLDER: This is where ElevenLabs API integration will go
-      // For now, we'll simulate a response
+      // Decode base64 audio and play it
+      const sound = new Audio.Sound();
 
-      const apiKey = process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY;
-      const agentId = process.env.EXPO_PUBLIC_ELEVENLABS_AGENT_ID;
+      await sound.loadAsync({
+        uri: `data:audio/mp3;base64,${audioBase64}`,
+      });
 
-      if (!apiKey || !agentId) {
-        // Simulate a demo conversation for testing
-        await new Promise(resolve => setTimeout(resolve, 1500));
+      soundRef.current = sound;
 
-        const demoResponse = {
-          userMessage: 'Demo message (ElevenLabs API not configured)',
-          auroraResponse: 'Hi! I\'m Aurora, your diabetes support companion. Once configured, I can help you understand your glucose patterns, suggest meal ideas, and answer questions about diabetes management.',
-        };
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.didJustFinish) {
+          setConversationState('idle');
+        }
+      });
 
-        setConversationHistory(prev => [...prev, demoResponse]);
-      } else {
-        // TODO: Implement actual ElevenLabs API call here
-        // Example structure:
-        // 1. Upload audio to ElevenLabs
-        // 2. Get transcription and agent response
-        // 3. Convert response to speech
-        // 4. Play audio response
+      await sound.playAsync();
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      setConversationState('idle');
+    }
+  };
 
-        Alert.alert(
-          'Not Implemented',
-          'ElevenLabs integration is ready but not yet implemented. Check the code for integration points.'
-        );
+  const stopConversation = async () => {
+    try {
+      // Stop recording
+      if (recordingRef.current) {
+        await recordingRef.current.stopAndUnloadAsync();
+        recordingRef.current = null;
       }
+
+      // Close WebSocket
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+
+      // Stop any playing audio
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+
+      setConversationState('idle');
     } catch (error) {
-      console.error('Error processing audio:', error);
-      Alert.alert('Error', 'Failed to process your message. Please try again.');
-    } finally {
-      setIsProcessing(false);
+      console.error('Error stopping conversation:', error);
+      setConversationState('idle');
     }
   };
 
   const handleMicrophonePress = async () => {
-    if (isRecording) {
-      await stopRecording();
+    if (conversationState === 'idle') {
+      await startConversation();
     } else {
-      await startRecording();
+      await stopConversation();
     }
+  };
+
+  const getStateText = () => {
+    switch (conversationState) {
+      case 'listening':
+        return 'Listening...';
+      case 'processing':
+        return 'Aurora is thinking...';
+      case 'speaking':
+        return 'Aurora is speaking...';
+      default:
+        return 'Tap to start talking';
+    }
+  };
+
+  const getMicrophoneIcon = () => {
+    if (conversationState === 'idle') return 'mic';
+    if (conversationState === 'listening') return 'mic';
+    return 'stop';
   };
 
   return (
@@ -158,6 +387,14 @@ export default function AuroraScreen({ navigation }) {
             <Text style={styles.emptyText}>
               Tap the microphone button below to chat with Aurora about your diabetes management
             </Text>
+            {userGlucoseContext && (
+              <View style={styles.contextCard}>
+                <Ionicons name="analytics-outline" size={20} color="#14B8A6" />
+                <Text style={styles.contextText}>
+                  Aurora knows your recent glucose average is {userGlucoseContext.averageGlucose} mg/dL
+                </Text>
+              </View>
+            )}
           </View>
         ) : (
           <View style={styles.conversationContainer}>
@@ -166,6 +403,7 @@ export default function AuroraScreen({ navigation }) {
                 {/* User Message */}
                 <View style={styles.userMessageContainer}>
                   <View style={styles.userMessage}>
+                    <Ionicons name="mic" size={14} color="#6B7280" style={styles.micIcon} />
                     <Text style={styles.userMessageText}>{item.userMessage}</Text>
                   </View>
                 </View>
@@ -181,13 +419,16 @@ export default function AuroraScreen({ navigation }) {
                 </View>
               </View>
             ))}
-          </View>
-        )}
 
-        {isProcessing && (
-          <View style={styles.processingContainer}>
-            <ActivityIndicator size="small" color="#14B8A6" />
-            <Text style={styles.processingText}>Aurora is thinking...</Text>
+            {/* Current transcript being processed */}
+            {currentTranscript && conversationState === 'processing' && (
+              <View style={styles.userMessageContainer}>
+                <View style={styles.userMessage}>
+                  <Ionicons name="mic" size={14} color="#6B7280" style={styles.micIcon} />
+                  <Text style={styles.userMessageText}>{currentTranscript}</Text>
+                </View>
+              </View>
+            )}
           </View>
         )}
       </ScrollView>
@@ -203,28 +444,36 @@ export default function AuroraScreen({ navigation }) {
           </View>
         )}
 
-        <TouchableOpacity
-          style={[
-            styles.microphoneButton,
-            isRecording && styles.microphoneButtonRecording,
-            !hasPermission && styles.microphoneButtonDisabled,
-          ]}
-          onPress={handleMicrophonePress}
-          disabled={isProcessing || !hasPermission}
-        >
-          {isProcessing ? (
-            <ActivityIndicator size="large" color="#FFFFFF" />
-          ) : (
+        {conversationState !== 'idle' && (
+          <View style={styles.statusIndicator}>
+            {conversationState === 'processing' && (
+              <ActivityIndicator size="small" color="#14B8A6" />
+            )}
+            <Text style={styles.statusText}>{getStateText()}</Text>
+          </View>
+        )}
+
+        <Animated.View style={{ transform: [{ scale: conversationState === 'listening' ? pulseAnim : 1 }] }}>
+          <TouchableOpacity
+            style={[
+              styles.microphoneButton,
+              conversationState === 'listening' && styles.microphoneButtonListening,
+              (conversationState === 'processing' || conversationState === 'speaking') && styles.microphoneButtonActive,
+              !hasPermission && styles.microphoneButtonDisabled,
+            ]}
+            onPress={handleMicrophonePress}
+            disabled={!hasPermission}
+          >
             <Ionicons
-              name={isRecording ? 'stop' : 'mic'}
+              name={getMicrophoneIcon()}
               size={48}
               color="#FFFFFF"
             />
-          )}
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </Animated.View>
 
         <Text style={styles.microphoneHint}>
-          {isRecording ? 'Tap to stop recording' : 'Tap to start talking'}
+          {getStateText()}
         </Text>
       </View>
     </SafeAreaView>
@@ -286,6 +535,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
+  contextCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 24,
+    gap: 8,
+  },
+  contextText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#047857',
+    lineHeight: 18,
+  },
   conversationContainer: {
     padding: 16,
   },
@@ -297,13 +562,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   userMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#E5E7EB',
     borderRadius: 16,
     borderTopRightRadius: 4,
     padding: 14,
     maxWidth: '80%',
+    gap: 6,
+  },
+  micIcon: {
+    opacity: 0.6,
   },
   userMessageText: {
+    flex: 1,
     fontSize: 15,
     color: '#1F2937',
     lineHeight: 20,
@@ -338,16 +610,17 @@ const styles = StyleSheet.create({
     color: '#374151',
     lineHeight: 22,
   },
-  processingContainer: {
+  statusIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 12,
+    marginBottom: 12,
+    gap: 8,
   },
-  processingText: {
+  statusText: {
     fontSize: 14,
     color: '#6B7280',
+    fontWeight: '500',
   },
   microphoneContainer: {
     alignItems: 'center',
@@ -385,7 +658,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  microphoneButtonRecording: {
+  microphoneButtonListening: {
+    backgroundColor: '#14B8A6',
+  },
+  microphoneButtonActive: {
     backgroundColor: '#EF4444',
   },
   microphoneButtonDisabled: {
