@@ -663,7 +663,16 @@ Keep the total weekly cost under $${weeklyBudget}. Be specific and practical.`;
 
         {/* TODAY'S INSIGHTS SECTION */}
         <View style={styles.insightsSection}>
-          <Text style={styles.sectionHeader}>Today's Insights</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionHeader}>Today's Insights</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Insights')}
+              style={styles.viewAllButton}
+            >
+              <Text style={styles.viewAllText}>Smart Insights</Text>
+              <Ionicons name="bulb" size={16} color="#14B8A6" />
+            </TouchableOpacity>
+          </View>
           <View style={styles.insightsGrid}>
             {/* Glucose Today */}
             <View style={styles.insightCard}>
@@ -2141,6 +2150,28 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 20,
     marginBottom: 8,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#F0FDFA',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#14B8A6',
+  },
+  viewAllText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#14B8A6',
   },
   insightsGrid: {
     flexDirection: 'row',

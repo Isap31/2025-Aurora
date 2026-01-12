@@ -20,6 +20,7 @@ import LogExerciseScreen from './src/screens/LogExerciseScreen';
 import AuroraChatScreen from './src/screens/AuroraChatScreen';
 import AuroraCallScreen from './src/screens/AuroraCallScreen';
 import CommunityScreen from './src/screens/CommunityScreen';
+import InsightsScreen from './src/screens/InsightsScreen';
 
 // Import auth service
 import authService from './src/services/authService';
@@ -129,6 +130,14 @@ export default function App() {
             <Stack.Screen
               name="AuroraCall"
               component={AuroraCallScreen}
+              options={{
+                headerShown: false,
+                presentation: 'card',
+              }}
+            />
+            <Stack.Screen
+              name="Insights"
+              component={InsightsScreen}
               options={{
                 headerShown: false,
                 presentation: 'card',
