@@ -962,6 +962,89 @@
     }
     .legend-dot-blue  { background: #1e40af; }
     .legend-dot-green { background: #16a34a; }
+
+    /* Sprint 4 – Free badge */
+    .badge-free {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    /* Sprint 4 – No Extra Fees badge */
+    .badge-nef {
+      background: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    /* Sprint 4 – Price breakdown box in detail */
+    .price-breakdown {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--r-md);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .price-breakdown-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--gray-500);
+      margin-bottom: 10px;
+    }
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 14px;
+    }
+    .price-row:last-child { border-bottom: none; }
+    .price-row .pk { color: var(--gray-600); }
+    .price-row .pv { font-weight: 700; color: var(--gray-900); }
+    .price-row .pv.free { color: var(--green); }
+    /* Sprint 4 – Compare screen */
+    #s-compare { background: var(--gray-50); }
+    .compare-card {
+      background: var(--white);
+      border-radius: var(--r-md);
+      border: 2px solid var(--gray-200);
+      padding: 15px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .compare-card:hover { border-color: var(--blue-light); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .compare-card.cheapest { border-color: var(--green); background: #f0fdf4; }
+    .compare-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .compare-card-name { font-size: 16px; font-weight: 700; color: var(--gray-900); }
+    .compare-card-dist { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+    .compare-card-price { font-size: 20px; font-weight: 800; color: var(--blue-mid); text-align: right; }
+    .compare-card-price.free { color: var(--green); }
+    .compare-card-price small { font-size: 12px; font-weight: 500; color: var(--gray-500); display: block; }
+    .compare-card-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .cheapest-banner {
+      background: var(--green);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
   </style>
 </head>
 <body>
@@ -1102,6 +1185,15 @@
         <div class="action-arrow">›</div>
       </div>
 
+      <div class="action-card" onclick="openCompare()">
+        <div class="action-icon" style="background:linear-gradient(135deg,#fef9c3,#fde68a);">💰</div>
+        <div class="action-text">
+          <h3>Compare Prices</h3>
+          <p>Find the cheapest charger near you</p>
+        </div>
+        <div class="action-arrow">›</div>
+      </div>
+
       <div class="section-label" style="margin-top:22px;">Recent Activity</div>
       <div class="card" style="display:flex;gap:12px;align-items:center;color:var(--gray-500);font-size:15px;">
         <span style="font-size:26px;">📋</span>
@@ -1123,6 +1215,8 @@
       <button class="chip"    data-filter="fast"   onclick="applyFilters('fast',this)">⚡ DC Fast</button>
       <button class="chip"    data-filter="level2" onclick="applyFilters('level2',this)">🔌 Level 2</button>
       <button class="chip"    data-filter="free"   onclick="applyFilters('free',this)">💰 Free</button>
+      <button id="chip-free" class="chip" onclick="toggleFreeFilter()">🆓 Free Only</button>
+      <button id="chip-sort-price" class="chip" onclick="togglePriceSort()">💲 Sort: Price ↑</button>
     </div>
     <!-- Interactive Leaflet map — tiles from OpenStreetMap, markers from stations-va.json -->
     <div id="map"></div>
@@ -1245,6 +1339,8 @@
         <div class="stat-mini"><div class="val" id="d-price">$0.36/kWh</div><div class="lbl">Price</div></div>
         <div class="stat-mini"><div class="val" id="d-speed">150 kW</div><div class="lbl">Max Speed</div></div>
       </div>
+
+      <div id="d-price-breakdown"></div>
 
       <div class="avail-section">
         <div class="avail-title">⚡ Port Availability</div>
@@ -1427,6 +1523,20 @@
     <button class="btn-white" onclick="go('s-home')">🏠 Return to Home Screen</button>
   </div>
 
+<!-- ══════════════════════════════════════
+     SCREEN 13 – PRICE COMPARISON
+══════════════════════════════════════ -->
+<div id="s-compare" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="go('s-nearby')">←</button>
+    <span class="screen-title">💰 Compare Nearby Chargers</span>
+  </div>
+  <div style="padding:14px 18px; background:var(--white); border-bottom:1px solid var(--gray-200); flex-shrink:0;">
+    <p style="font-size:14px; color:var(--gray-500);">Sorted by estimated cost. Tap any charger to view details or start charging.</p>
+  </div>
+  <div id="compare-list" style="padding:16px 18px; flex:1; overflow-y:auto;"></div>
+</div>
+
 </div><!-- /#app -->
 
 <div id="toasts"></div>
@@ -1529,6 +1639,8 @@ let currentCharger = null;
 let detailSource   = 'nearby';
 let chargeTimer    = null;
 let chargePct      = 35;
+let showFreeOnly   = false;
+let sortByPrice    = false;
 
 /* ══════════════════════════════════════════════
    NAVIGATION
@@ -2298,7 +2410,8 @@ function renderMarkers(stations) {
     const lng = parseFloat(station.lng);
     if (isNaN(lat) || isNaN(lng)) return; // skip invalid coords
 
-    const color = station.charger_type === 'DC Fast' ? '#1e40af' : '#16a34a';
+    const markerColor = station.is_free ? '#16a34a' : (station.status === 'available' ? '#1e40af' : '#d97706');
+    const color = markerColor;
 
     const marker = L.circleMarker([lat, lng], {
       radius: 9,
@@ -2398,6 +2511,11 @@ function openStationDetails(station) {
     .join('');
 
   document.getElementById('ch-station').textContent = station.name + ' – ' + station.city;
+
+  // Sprint 4: render pricing breakdown
+  const pbd = document.getElementById('d-price-breakdown');
+  if (pbd) pbd.innerHTML = pricingBreakdownHtml(station);
+
   go('s-detail');
 }
 
@@ -2457,7 +2575,16 @@ function applyFilters(type, btn) {
 ══════════════════════════════════════════════ */
 function renderStationList(stations) {
   const el = document.getElementById('charger-list');
-  if (!stations.length) {
+
+  // Sprint 4: apply free-only filter
+  let list = showFreeOnly ? stations.filter(s => s.is_free === true) : stations;
+
+  // Sprint 4: apply price sort
+  if (sortByPrice) {
+    list = [...list].sort((a, b) => estimatedCost(a) - estimatedCost(b));
+  }
+
+  if (!list.length) {
     el.innerHTML =
       '<div class="empty-state">' +
       '<div class="empty-icon">🔍</div>' +
@@ -2466,11 +2593,11 @@ function renderStationList(stations) {
       '</div>';
     return;
   }
-  el.innerHTML = stations.map(s => {
+  el.innerHTML = list.map(s => {
     const st   = (s.status || 'unknown').toLowerCase();
     const bc   = st === 'available' ? 'badge-ok' : st === 'limited' ? 'badge-lim' : 'badge-no';
     const bt   = st === 'available' ? '● Available' : st === 'limited' ? '◑ Limited' : '○ Unknown';
-    const isFree = s.pricing === null ||
+    const isFree = s.is_free === true || s.pricing === null ||
                    (s.pricing_display || '').toLowerCase().includes('free');
     const pt   = isFree
       ? '<span style="color:var(--green);font-weight:700;">FREE</span>'
@@ -2484,6 +2611,7 @@ function renderStationList(stations) {
         </div>
         <span class="badge ${bc}">${bt}</span>
       </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">${freeBadgeHtml(s)}${nefBadgeHtml(s)}</div>
       <div class="cc-bottom">
         <div class="cc-meta">
           <div class="cc-meta-item">💰 ${pt}</div>
@@ -2509,6 +2637,111 @@ function toast(msg, type = 'info') {
     el.classList.add('out');
     setTimeout(() => el.remove(), 320);
   }, 3000);
+}
+
+/* ══════════════════════════════════════════════
+   SPRINT 4 – PRICE TRANSPARENCY & COMPARISON
+══════════════════════════════════════════════ */
+
+/* ── Sprint 4: Free filter toggle ── */
+function toggleFreeFilter() {
+  showFreeOnly = !showFreeOnly;
+  document.getElementById('chip-free').classList.toggle('on', showFreeOnly);
+  renderStationList(stationsData);
+}
+
+/* ── Sprint 4: Price sort toggle ── */
+function togglePriceSort() {
+  sortByPrice = !sortByPrice;
+  document.getElementById('chip-sort-price').classList.toggle('on', sortByPrice);
+  renderStationList(stationsData);
+}
+
+/* ── Sprint 4: Free badge HTML ── */
+function freeBadgeHtml(st) {
+  if (!st.is_free) return '';
+  return '<span class="badge-free">🆓 Free</span>';
+}
+
+/* ── Sprint 4: No Extra Fees badge HTML ── */
+function nefBadgeHtml(st) {
+  if (!st.no_extra_fees || st.is_free) return '';
+  return '<span class="badge-nef">✓ No Extra Fees</span>';
+}
+
+/* ── Sprint 4: Price breakdown block for detail screen ── */
+function pricingBreakdownHtml(st) {
+  const rows = [];
+  if (st.is_free) {
+    rows.push(`<div class="price-row"><span class="pk">Energy</span><span class="pv free">FREE</span></div>`);
+  } else {
+    if (st.pricing_per_kwh != null)
+      rows.push(`<div class="price-row"><span class="pk">Per kWh</span><span class="pv">$${st.pricing_per_kwh.toFixed(2)}</span></div>`);
+    if (st.pricing_per_min != null)
+      rows.push(`<div class="price-row"><span class="pk">Per minute</span><span class="pv">$${st.pricing_per_min.toFixed(2)}/min</span></div>`);
+    if (st.fixed_fee != null)
+      rows.push(`<div class="price-row"><span class="pk">Connection fee</span><span class="pv">$${st.fixed_fee.toFixed(2)}</span></div>`);
+    if (rows.length === 0)
+      rows.push(`<div class="price-row"><span class="pk">Rate</span><span class="pv">${st.pricing_display || 'See network app'}</span></div>`);
+    // Estimated cost for 20 kWh session
+    if (st.pricing_per_kwh != null) {
+      const est = (st.pricing_per_kwh * 20 + (st.fixed_fee || 0)).toFixed(2);
+      rows.push(`<div class="price-row" style="margin-top:4px;padding-top:8px;border-top:2px solid var(--gray-200)"><span class="pk" style="font-weight:700">Est. cost (20 kWh)</span><span class="pv" style="color:var(--blue-mid)">~$${est}</span></div>`);
+    }
+  }
+  const nef = st.no_extra_fees && !st.is_free ? '<div style="margin-top:8px"><span class="badge-nef">✓ No Extra Fees</span></div>' : '';
+  return `<div class="price-breakdown"><div class="price-breakdown-title">💲 Pricing Breakdown</div>${rows.join('')}${nef}</div>`;
+}
+
+/* ── Sprint 4: estimated cost for comparison (per 20 kWh) ── */
+function estimatedCost(st) {
+  if (st.is_free) return 0;
+  if (st.pricing_per_kwh != null) return st.pricing_per_kwh * 20 + (st.fixed_fee || 0);
+  return Infinity;
+}
+
+/* ── Sprint 4: Open compare screen ── */
+function openCompare() {
+  go('s-compare');
+  renderCompareList();
+}
+
+/* ── Sprint 4: Render compare list ── */
+function renderCompareList() {
+  const el = document.getElementById('compare-list');
+  if (!el) return;
+  // Sort all available stations by estimated cost
+  const sorted = [...stationsData]
+    .filter(s => s.status !== 'unavailable')
+    .sort((a, b) => estimatedCost(a) - estimatedCost(b))
+    .slice(0, 8); // show top 8
+
+  if (!sorted.length) { el.innerHTML = '<p style="color:var(--gray-500);text-align:center;padding:40px 0">No stations found.</p>'; return; }
+
+  el.innerHTML = sorted.map((st, i) => {
+    const isCheapest = i === 0;
+    const cost = estimatedCost(st);
+    const costStr = st.is_free ? 'FREE' : cost === Infinity ? 'Variable' : `~$${cost.toFixed(2)}`;
+    const costClass = st.is_free ? 'free' : '';
+    const costSub = st.is_free ? '' : (cost !== Infinity ? '<small>est. per 20 kWh</small>' : '<small>check network app</small>');
+    const connectors = (st.connectors || []).join(', ');
+    return `
+      <div class="compare-card${isCheapest ? ' cheapest' : ''}" onclick="window.__rrOpenStation('${st.id}')">
+        <div class="compare-card-top">
+          <div>
+            <div class="compare-card-name">${st.name}</div>
+            <div class="compare-card-dist">${st.city}, ${st.state} · ${st.charger_type}</div>
+          </div>
+          <div class="compare-card-price ${costClass}">${costStr}${costSub}</div>
+        </div>
+        <div class="compare-card-meta">
+          ${isCheapest ? '<span class="cheapest-banner">⭐ Cheapest</span>' : ''}
+          ${freeBadgeHtml(st)}
+          ${nefBadgeHtml(st)}
+          <span style="font-size:13px;color:var(--gray-500);">${connectors}</span>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 /* ══════════════════════════════════════════════
