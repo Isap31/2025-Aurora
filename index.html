@@ -1214,7 +1214,6 @@
       <button class="chip on" data-filter="all"    onclick="applyFilters('all',this)">🔍 All</button>
       <button class="chip"    data-filter="fast"   onclick="applyFilters('fast',this)">⚡ DC Fast</button>
       <button class="chip"    data-filter="level2" onclick="applyFilters('level2',this)">🔌 Level 2</button>
-      <button class="chip"    data-filter="free"   onclick="applyFilters('free',this)">💰 Free</button>
       <button id="chip-free" class="chip" onclick="toggleFreeFilter()">🆓 Free Only</button>
       <button id="chip-sort-price" class="chip" onclick="togglePriceSort()">💲 Sort: Price ↑</button>
     </div>
@@ -2597,11 +2596,10 @@ function renderStationList(stations) {
     const st   = (s.status || 'unknown').toLowerCase();
     const bc   = st === 'available' ? 'badge-ok' : st === 'limited' ? 'badge-lim' : 'badge-no';
     const bt   = st === 'available' ? '● Available' : st === 'limited' ? '◑ Limited' : '○ Unknown';
-    const isFree = s.is_free === true || s.pricing === null ||
-                   (s.pricing_display || '').toLowerCase().includes('free');
+    const isFree = s.is_free === true;
     const pt   = isFree
       ? '<span style="color:var(--green);font-weight:700;">FREE</span>'
-      : s.pricing_display;
+      : (s.pricing_display || 'See network app');
     return `<div class="charger-card" onclick="window.__rrOpenStation('${s.id}')">
       <div class="cc-top">
         <div>
